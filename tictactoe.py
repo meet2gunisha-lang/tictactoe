@@ -272,6 +272,14 @@ def check(cnt):
                     board[0][0].config(text="O", state=tk.DISABLED)
                 elif ((board[0][1].cget("text")=="X" and board[1][2].cget("text")=="X")) and (board[0][2].cget("text")==""):
                     board[0][2].config(text="O", state=tk.DISABLED)
+                elif ((board[1][2].cget("text")=="X" and (board[0][0].cget("text")=="X" or board[2][0].cget("text")=="X"))) and (board[2][1].cget("text")==""):
+                    board[2][1].config(text="O", state=tk.DISABLED)
+                elif ((board[2][1].cget("text")=="X" and (board[0][0].cget("text")=="X" or board[0][2].cget("text")=="X"))) and (board[1][0].cget("text")==""):
+                    board[1][0].config(text="O", state=tk.DISABLED)
+                elif ((board[1][0].cget("text")=="X" and (board[0][2].cget("text")=="X" or board[2][2].cget("text")=="X"))) and (board[2][1].cget("text")==""):
+                    board[2][1].config(text="O", state=tk.DISABLED)
+                elif ((board[0][1].cget("text")=="X" and (board[2][0].cget("text")=="X" or board[2][2].cget("text")=="X"))) and (board[1][0].cget("text")==""):
+                    board[1][0].config(text="O", state=tk.DISABLED)
                 else:
                     ai_btn = random.choice(empty_buttons)
                     ai_btn.config(text="O", state=tk.DISABLED)
