@@ -281,8 +281,21 @@ def check(cnt):
                 elif ((board[0][1].cget("text")=="X" and (board[2][0].cget("text")=="X" or board[2][2].cget("text")=="X"))) and (board[1][0].cget("text")==""):
                     board[1][0].config(text="O", state=tk.DISABLED)
                 else:
-                    ai_btn = random.choice(empty_buttons)
-                    ai_btn.config(text="O", state=tk.DISABLED)
+                    if ((board[2][0].cget("text")=="X" and board[0][2].cget("text")=="X") or (board[0][0].cget("text")=="X" and board[2][2].cget("text")=="X")):
+                        blank_list1=[]
+                        if board[0][1].cget("text")=="":
+                            blank_list1.append(board[0][1])
+                        if board[1][0].cget("text")=="":
+                            blank_list1.append(board[1][0])
+                        if board[1][2].cget("text")=="":
+                            blank_list1.append(board[1][2])
+                        if board[2][1].cget("text")=="":
+                            blank_list1.append(board[2][1])
+                        ai_btn = random.choice(blank_list1)
+                        ai_btn.config(text="O", state=tk.DISABLED)
+                    else:
+                        ai_btn = random.choice(empty_buttons)
+                        ai_btn.config(text="O", state=tk.DISABLED)
             #if user plays 2 corners
             else:
                 blank_list1=[]
