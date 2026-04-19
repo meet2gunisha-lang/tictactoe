@@ -302,206 +302,79 @@ def check(cnt):
 
 
 
+# ── Minimax helpers ─────────────────────────────────────────────────────────
+def minimax_check(board):
+    """Check board state. Returns 'X', 'O', 'tie', or None (game ongoing)."""
+    lines = [
+        [board[0][0],board[0][1],board[0][2]],
+        [board[1][0],board[1][1],board[1][2]],
+        [board[2][0],board[2][1],board[2][2]],
+        [board[0][0],board[1][0],board[2][0]],
+        [board[0][1],board[1][1],board[2][1]],
+        [board[0][2],board[1][2],board[2][2]],
+        [board[0][0],board[1][1],board[2][2]],
+        [board[0][2],board[1][1],board[2][0]],
+    ]
+    for line in lines:
+        if line==["X","X","X"]: return "X"
+        if line==["O","O","O"]: return "O"
+    if all(board[r][c]!="" for r in range(3) for c in range(3)): return "tie"
+    return None
+
+def minimax(board, is_maximizing):
+    """Minimax: O is maximiser (+10), X is minimiser (-10), tie is 0."""
+    result = minimax_check(board)
+    if result=="O":   return 10
+    if result=="X":   return -10
+    if result=="tie": return 0
+    if is_maximizing:
+        best = -100
+        for r in range(3):
+            for c in range(3):
+                if board[r][c]=="":
+                    board[r][c]="O"
+                    best = max(best, minimax(board, False))
+                    board[r][c]=""
+        return best
+    else:
+        best = 100
+        for r in range(3):
+            for c in range(3):
+                if board[r][c]=="":
+                    board[r][c]="X"
+                    best = min(best, minimax(board, True))
+                    board[r][c]=""
+        return best
+
+def best_move(board):
+    """Return (row, col) of the best move for O using minimax."""
+    best_score, best_pos = -100, None
+    for r in range(3):
+        for c in range(3):
+            if board[r][c]=="":
+                board[r][c]="O"
+                score = minimax(board, False)
+                board[r][c]=""
+                if score > best_score:
+                    best_score, best_pos = score, (r, c)
+    return best_pos
+
 #Computer logic
-def minmax(btn):
+def minimax_hard(btn):
     if btn.cget("text")=='':
         btn.config(text="X",state=tk.DISABLED)
-        # flatten + filter for empty buttons
-        board=[[button_hard[r][c] for c in range (3)]for r in range (3)]
-        empty_buttons = [b for row in button_hard for b in row if b.cget("text") == ""]
+        board_text=[[button_hard[r][c].cget("text") for c in range(3)] for r in range(3)]
+        empty_buttons=[b for row in button_hard for b in row if b.cget("text")==""]
         cnt=len(empty_buttons)
         win=Winner(button_hard)
         if cnt==0:
             win=Winner(button_hard)
         elif win==0:
-            check_minmax(cnt)
-        if cnt==8:
-            if board[1][1].cget("text")=="X" :
-                ai_btn = random.choice([board[0][0], board[0][2],board[2][0], board[2][2]])
-                ai_btn.config(text="O", state=tk.DISABLED)
-            else:
-                board[1][1].config(text="O", state=tk.DISABLED)
+            pos=best_move(board_text)
+            if pos:
+                r,c=pos
+                button_hard[r][c].config(text="O",state=tk.DISABLED)
         Winner(button_hard)
-
-def check_minmax(cnt):
-    board=[[button_hard[r][c] for c in range (3)]for r in range (3)]
-    empty_buttons = [b for row in button_hard for b in row if b.cget("text") == ""]
-    hori_1=[board[0][0].cget("text"),board[0][1].cget("text"),board[0][2].cget("text")]
-    hori_2=[board[1][0].cget("text"),board[1][1].cget("text"),board[1][2].cget("text")]
-    hori_3=[board[2][0].cget("text"),board[2][1].cget("text"),board[2][2].cget("text")]
-    ver_1=[board[0][0].cget("text"),board[1][0].cget("text"),board[2][0].cget("text")]
-    ver_2=[board[0][1].cget("text"),board[1][1].cget("text"),board[2][1].cget("text")]
-    ver_3=[board[0][2].cget("text"),board[1][2].cget("text"),board[2][2].cget("text")]
-    diag_1=[board[0][0].cget("text"),board[1][1].cget("text"),board[2][2].cget("text")]
-    diag_2=[board[0][2].cget("text"),board[1][1].cget("text"),board[2][0].cget("text")]
-    # See if AI is winning
-    if hori_1==["O","O",""]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    elif hori_1==["O","","O"]:
-        board[0][1].config(text="O", state=tk.DISABLED)
-    elif hori_1==["","O","O"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif hori_2==["O","O",""]:
-        board[1][2].config(text="O", state=tk.DISABLED)
-    elif hori_2==["O","","O"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif hori_2==["","O","O"]:
-        board[1][0].config(text="O", state=tk.DISABLED)
-    elif hori_3==["O","O",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif hori_3==["O","","O"]:
-        board[2][1].config(text="O", state=tk.DISABLED)
-    elif hori_3==["","O","O"]:
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["O","O",""] :
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["O","","O"]:
-        board[1][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["","O","O"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif ver_2==["O","O",""]:
-        board[2][1].config(text="O", state=tk.DISABLED)
-    elif ver_2==["O","","O"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif ver_2==["","O","O"]:
-        board[0][1].config(text="O", state=tk.DISABLED)
-    elif ver_3==["O","O",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif ver_3==["O","","O"]:
-        board[1][2].config(text="O", state=tk.DISABLED)
-    elif ver_3==["","O","O"]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    elif diag_1==["O","O",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif diag_1==["O","","O"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif diag_1==["","O","O"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif diag_2==["O","O",""]:
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif diag_2==["O","","O"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif diag_2==["","O","O"]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    # Check to block user
-    elif hori_1==["X","X",""]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    elif hori_1==["X","","X"]:
-        board[0][1].config(text="O", state=tk.DISABLED)
-    elif hori_1==["","X","X"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif hori_2==["X","X",""]:
-        board[1][2].config(text="O", state=tk.DISABLED)
-    elif hori_2==["X","","X"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif hori_2==["","X","X"]:
-        board[1][0].config(text="O", state=tk.DISABLED)
-    elif hori_3==["X","X",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif hori_3==["X","","X"]:
-        board[2][1].config(text="O", state=tk.DISABLED)
-    elif hori_3==["","X","X"]:
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["X","X",""] :
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["X","","X"]:
-        board[1][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["","X","X"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif ver_2==["X","X",""]:
-        board[2][1].config(text="O", state=tk.DISABLED)
-    elif ver_2==["X","","X"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif ver_2==["","X","X"]:
-        board[0][1].config(text="O", state=tk.DISABLED)
-    elif ver_3==["X","X",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif ver_3==["X","","X"]:
-        board[1][2].config(text="O", state=tk.DISABLED)
-    elif ver_3==["","X","X"]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    elif diag_1==["X","X",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif diag_1==["X","","X"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif diag_1==["","X","X"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif diag_2==["X","X",""]:
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif diag_2==["X","","X"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif diag_2==["","X","X"]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    #Other winning conditions
-    elif cnt!=8:
-        #if user starts from corner and plays next on side middle
-        if board[1][1].cget("text")=="O" and (board[0][1].cget("text")=="" or board[1][0].cget("text")=="" or board[1][2].cget("text")=="" or board[2][1].cget("text")==""):
-            if ((board[2][0].cget("text")=="X" and board[0][1].cget("text")=="X") or (board[0][0].cget("text")=="X" and board[2][1].cget("text")=="X")) and (board[1][2].cget("text")==""):
-                board[1][2].config(text="O", state=tk.DISABLED)
-            elif ((board[2][2].cget("text")=="X" and board[0][1].cget("text")=="X") or (board[0][2].cget("text")=="X" and board[2][1].cget("text")=="X")) and (board[1][0].cget("text")==""):
-                board[1][0].config(text="O", state=tk.DISABLED)
-            elif board[1][1].cget("text")=="O" and (board[0][0].cget("text")=="" or board[0][2].cget("text")=="" or board[2][0].cget("text")=="" or board[2][2].cget("text")==""):
-                if ((board[2][1].cget("text")=="X" and board[1][2].cget("text")=="X")) and (board[2][2].cget("text")==""):
-                    board[2][2].config(text="O", state=tk.DISABLED)
-                elif ((board[1][0].cget("text")=="X" and board[2][1].cget("text")=="X"))and (board[2][0].cget("text")==""):
-                    board[2][0].config(text="O", state=tk.DISABLED)
-                elif ((board[0][1].cget("text")=="X" and board[1][0].cget("text")=="X")) and (board[0][0].cget("text")==""):
-                    board[0][0].config(text="O", state=tk.DISABLED)
-                elif ((board[0][1].cget("text")=="X" and board[1][2].cget("text")=="X")) and (board[0][2].cget("text")==""):
-                    board[0][2].config(text="O", state=tk.DISABLED)
-                elif ((board[1][2].cget("text")=="X" and (board[0][0].cget("text")=="X" or board[2][0].cget("text")=="X"))) and (board[2][1].cget("text")==""):
-                    board[2][1].config(text="O", state=tk.DISABLED)
-                elif ((board[2][1].cget("text")=="X" and (board[0][0].cget("text")=="X" or board[0][2].cget("text")=="X"))) and (board[1][0].cget("text")==""):
-                    board[1][0].config(text="O", state=tk.DISABLED)
-                elif ((board[1][0].cget("text")=="X" and (board[0][2].cget("text")=="X" or board[2][2].cget("text")=="X"))) and (board[2][1].cget("text")==""):
-                    board[2][1].config(text="O", state=tk.DISABLED)
-                elif ((board[0][1].cget("text")=="X" and (board[2][0].cget("text")=="X" or board[2][2].cget("text")=="X"))) and (board[1][0].cget("text")==""):
-                    board[1][0].config(text="O", state=tk.DISABLED)
-                else:
-                    if ((board[2][0].cget("text")=="X" and board[0][2].cget("text")=="X") or (board[0][0].cget("text")=="X" and board[2][2].cget("text")=="X")):
-                        blank_list1=[]
-                        if board[0][1].cget("text")=="":
-                            blank_list1.append(board[0][1])
-                        if board[1][0].cget("text")=="":
-                            blank_list1.append(board[1][0])
-                        if board[1][2].cget("text")=="":
-                            blank_list1.append(board[1][2])
-                        if board[2][1].cget("text")=="":
-                            blank_list1.append(board[2][1])
-                        ai_btn = random.choice(blank_list1)
-                        ai_btn.config(text="O", state=tk.DISABLED)
-                    else:
-                        ai_btn = random.choice(empty_buttons)
-                        ai_btn.config(text="O", state=tk.DISABLED)
-            #if user plays 2 corners
-            else:
-                blank_list1=[]
-                if board[0][1].cget("text")=="":
-                    blank_list1.append(board[0][1])
-                if board[1][0].cget("text")=="":
-                    blank_list1.append(board[1][0])
-                if board[1][2].cget("text")=="":
-                    blank_list1.append(board[1][2])
-                if board[2][1].cget("text")=="":
-                    blank_list1.append(board[2][1])
-                ai_btn = random.choice(blank_list1)
-                ai_btn.config(text="O", state=tk.DISABLED)
-        #if user starts from middle
-        elif board[1][1].cget("text")=="X" and (board[0][0].cget("text")=="" or board[0][2].cget("text")=="" or board[2][0].cget("text")=="" or board[2][2].cget("text")==""):
-            blank_list2=[]
-            if board[0][0].cget("text")=="":
-                blank_list2.append(board[0][0])
-            if board[0][2].cget("text")=="":
-                blank_list2.append(board[0][2])
-            if board[2][0].cget("text")=="":
-                blank_list2.append(board[2][0])
-            if board[2][2].cget("text")=="":
-                blank_list2.append(board[2][2])
-            ai_btn = random.choice(blank_list2)
-            ai_btn.config(text="O", state=tk.DISABLED)
-        else:
-            ai_btn = random.choice(empty_buttons)
-            ai_btn.config(text="O", state=tk.DISABLED)
 
 
 
@@ -563,7 +436,7 @@ for row in range(3):
     button_row = []
     for col in range(3):
         btn = tk.Button(grid_frame, text="", width=5, height=2, font=("Arial", 18))
-        btn.config(command=lambda b=btn:minmax(b))
+        btn.config(command=lambda b=btn:minimax_hard(b))
         btn.grid(row=row, column=col, padx=5, pady=5)
         button_row.append(btn)
     button_hard.append(button_row)
