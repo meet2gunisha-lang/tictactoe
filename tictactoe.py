@@ -2,89 +2,46 @@ import tkinter as tk
 import random
 from tkinter import messagebox
 
-
-def show_frame(frame):
-    frame.tkraise()
-
-# --- Root window setup ---
-root = tk.Tk()
-root.title("Tic-Tac-Toe")
-root.geometry("400x470")
-root.configure(bg="lavender")
-
-root.rowconfigure(0, weight=1)
-root.columnconfigure(0, weight=1)
-
-# --- Define Frames ---
-menu_page   = tk.Frame(root, bg="lavender")
-easy_page   = tk.Frame(root, bg="lightgreen")
-medium_page = tk.Frame(root, bg="moccasin")
-hard_page   = tk.Frame(root, bg="lightblue")   
-
-for frame in (menu_page, easy_page, medium_page, hard_page):
-    frame.grid(row=0, column=0, sticky="nsew")
-
-
-# ── MENU PAGE ──────────────────────────────────────────────────────────────
-tk.Label(menu_page, text="🎮 TIC-TAC-TOE 🎮", bg="lavender", fg="purple",
-         font=("Arial", 16, "bold")).pack(pady=20)
-
-tk.Button(menu_page, text="Easy Mode",   width=15, bg="white",
-          command=lambda: show_frame(easy_page)).pack(pady=8)
-tk.Button(menu_page, text="Medium Mode", width=15, bg="white",
-          command=lambda: show_frame(medium_page)).pack(pady=8)
-tk.Button(menu_page, text="Hard Mode",   width=15, bg="white",
-          command=lambda: show_frame(hard_page)).pack(pady=8)
-
-tk.Button(menu_page, text="Exit", width=10, bg="purple", fg="white",
-          command=root.destroy).pack(pady=20)
-
-
+# all methods below are for game logic and button handling, called by the above button commands
 def clear_btn(buttons):
     not_empty_buttons = [b for row in buttons for b in row ]
     for i in not_empty_buttons:  
             i.config(text="",state=tk.NORMAL)
 
-def check_winner(buttons):
-    board = [[buttons[r][c].cget("text") for c in range(3)] for r in range(3)]
-    hori_1=[board[0][0],board[0][1],board[0][2]]
-    hori_2=[board[1][0],board[1][1],board[1][2]]
-    hori_3=[board[2][0],board[2][1],board[2][2]]
-    ver_1=[board[0][0],board[1][0],board[2][0]]
-    ver_2=[board[0][1],board[1][1],board[2][1]]
-    ver_3=[board[0][2],board[1][2],board[2][2]]
-    diag_1=[board[0][0],board[1][1],board[2][2]]
-    diag_2=[board[0][2],board[1][1],board[2][0]]
-    empty=[b for row in buttons for b in row if b.cget("text")==""]
 
-    if hori_1==["X","X","X"] or hori_2==["X","X","X"] or hori_3==["X","X","X"]:
+def check_board(board):
+    """Check board state. Returns 'X', 'O', 'tie', or None (game ongoing)."""
+    lines = [
+        [board[0][0],board[0][1],board[0][2]],
+        [board[1][0],board[1][1],board[1][2]],
+        [board[2][0],board[2][1],board[2][2]],
+        [board[0][0],board[1][0],board[2][0]],
+        [board[0][1],board[1][1],board[2][1]],
+        [board[0][2],board[1][2],board[2][2]],
+        [board[0][0],board[1][1],board[2][2]],
+        [board[0][2],board[1][1],board[2][0]],
+    ]
+    for line in lines:        
+        if line==["X","X","X"]: return "X"
+        if line==["O","O","O"]: return "O"
+    if all(board[r][c]!="" for r in range(3) for c in range(3)): return "tie"
+    return None
+
+def check_winner(board):    
+    board_text=[[board[r][c].cget("text") for c in range(3)] for r in range(3)]
+    status = check_board(board_text)
+    if status=="X": 
         messagebox.showinfo("Game Over","YOU WON 🎉")
-        clear_btn(buttons)
-        return 1
-    elif hori_1==["O","O","O"] or hori_2==["O","O","O"] or hori_3==["O","O","O"]:
+        clear_btn(board)
+        return "X"
+    elif status=="O": 
         messagebox.showinfo("Game Over","Computer Won 😔")
-        clear_btn(buttons)
-        return 1
-    elif ver_1==["X","X","X"] or ver_2==["X","X","X"] or ver_3==["X","X","X"]:
-        messagebox.showinfo("Game Over","YOU WON 🎉")
-        clear_btn(buttons)
-        return 1
-    elif ver_1==["O","O","O"] or ver_2==["O","O","O"] or ver_3==["O","O","O"]:
-        messagebox.showinfo("Game Over","Computer Won 😔")
-        clear_btn(buttons)
-        return 1
-    elif diag_1==["X","X","X"] or diag_2==["X","X","X"]:
-        messagebox.showinfo("Game Over","YOU WON 🎉")
-        clear_btn(buttons)
-        return 1
-    elif diag_1==["O","O","O"] or diag_2==["O","O","O"]:
-        messagebox.showinfo("Game Over","Computer Won 😔")
-        clear_btn(buttons)
-        return 1
-    elif len(empty)==0:
-        messagebox.showinfo("Game Over","Tie 🪢")
-        clear_btn(buttons)
-        return 1
+        clear_btn(board)
+        return "O"
+    elif status=="tie":
+        messagebox.showinfo("Game Over","It's a Tie 😐")
+        clear_btn(board)
+        return "tie"
     return 0
 
 def easy_mode(btn):
@@ -329,27 +286,9 @@ def best_move(board):
                     best_score, best_pos = score, (r, c)
     return best_pos
 
-def check_minimax(board):
-    """Check board state. Returns 'X', 'O', 'tie', or None (game ongoing)."""
-    lines = [
-        [board[0][0],board[0][1],board[0][2]],
-        [board[1][0],board[1][1],board[1][2]],
-        [board[2][0],board[2][1],board[2][2]],
-        [board[0][0],board[1][0],board[2][0]],
-        [board[0][1],board[1][1],board[2][1]],
-        [board[0][2],board[1][2],board[2][2]],
-        [board[0][0],board[1][1],board[2][2]],
-        [board[0][2],board[1][1],board[2][0]],
-    ]
-    for line in lines:
-        if line==["X","X","X"]: return "X"
-        if line==["O","O","O"]: return "O"
-    if all(board[r][c]!="" for r in range(3) for c in range(3)): return "tie"
-    return None
-
 def minimax(board, is_maximizing):
     """Minimax: O is maximiser (+10), X is minimiser (-10), tie is 0."""
-    result = check_minimax(board)
+    result = check_board(board)
     if result=="O":   return 10
     if result=="X":   return -10
     if result=="tie": return 0
@@ -371,6 +310,41 @@ def minimax(board, is_maximizing):
                     best = min(best, minimax(board, True))
                     board[r][c]=""
         return best
+
+def show_frame(frame):
+    frame.tkraise()
+
+# --- Root window setup ---
+root = tk.Tk()
+root.title("Tic-Tac-Toe")
+root.geometry("400x470")
+root.configure(bg="lavender")
+
+root.rowconfigure(0, weight=1)
+root.columnconfigure(0, weight=1)
+
+# --- Define Frames ---
+menu_page   = tk.Frame(root, bg="lavender")
+easy_page   = tk.Frame(root, bg="lightgreen")
+medium_page = tk.Frame(root, bg="moccasin")
+hard_page   = tk.Frame(root, bg="lightblue")   
+
+for frame in (menu_page, easy_page, medium_page, hard_page):
+    frame.grid(row=0, column=0, sticky="nsew")
+
+# ── MENU PAGE ──────────────────────────────────────────────────────────────
+tk.Label(menu_page, text="🎮 TIC-TAC-TOE 🎮", bg="lavender", fg="purple",
+         font=("Arial", 16, "bold")).pack(pady=20)
+
+tk.Button(menu_page, text="Easy Mode",   width=15, bg="white",
+          command=lambda: show_frame(easy_page)).pack(pady=8)
+tk.Button(menu_page, text="Medium Mode", width=15, bg="white",
+          command=lambda: show_frame(medium_page)).pack(pady=8)
+tk.Button(menu_page, text="Hard Mode",   width=15, bg="white",
+          command=lambda: show_frame(hard_page)).pack(pady=8)
+
+tk.Button(menu_page, text="Exit", width=10, bg="purple", fg="white",
+          command=root.destroy).pack(pady=20)
 
 # --- EASY PAGE ---
 tk.Label(easy_page, text="Easy Mode 🟢", bg="lightgreen",
@@ -414,7 +388,6 @@ for row in range(3):
     button_medium.append(button_row)
 
 tk.Button(medium_page, text="Back to Menu", command=lambda: (show_frame(menu_page),clear_btn(button_medium))).pack()
-
 
 # --- HARD PAGE ---
 tk.Label(hard_page, text="Hard Mode 🔵 - Using Minimax", bg="lightblue",
