@@ -92,113 +92,36 @@ def medium_mode(btn, board):
 def check_medium(cnt, board):
     board=[[board[r][c] for c in range (3)]for r in range (3)]
     empty_buttons = [b for row in board for b in row if b.cget("text") == ""]
-    # read current text for all rows, columns, and diagonals
-    hori_1=[board[0][0].cget("text"),board[0][1].cget("text"),board[0][2].cget("text")]
-    hori_2=[board[1][0].cget("text"),board[1][1].cget("text"),board[1][2].cget("text")]
-    hori_3=[board[2][0].cget("text"),board[2][1].cget("text"),board[2][2].cget("text")]
-    ver_1=[board[0][0].cget("text"),board[1][0].cget("text"),board[2][0].cget("text")]
-    ver_2=[board[0][1].cget("text"),board[1][1].cget("text"),board[2][1].cget("text")]
-    ver_3=[board[0][2].cget("text"),board[1][2].cget("text"),board[2][2].cget("text")]
-    diag_1=[board[0][0].cget("text"),board[1][1].cget("text"),board[2][2].cget("text")]
-    diag_2=[board[0][2].cget("text"),board[1][1].cget("text"),board[2][0].cget("text")]
-    # See if AI is winning — complete any O two-in-a-row
-    if hori_1==["O","O",""]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    elif hori_1==["O","","O"]:
-        board[0][1].config(text="O", state=tk.DISABLED)
-    elif hori_1==["","O","O"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif hori_2==["O","O",""]:
-        board[1][2].config(text="O", state=tk.DISABLED)
-    elif hori_2==["O","","O"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif hori_2==["","O","O"]:
-        board[1][0].config(text="O", state=tk.DISABLED)
-    elif hori_3==["O","O",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif hori_3==["O","","O"]:
-        board[2][1].config(text="O", state=tk.DISABLED)
-    elif hori_3==["","O","O"]:
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["O","O",""] :
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["O","","O"]:
-        board[1][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["","O","O"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif ver_2==["O","O",""]:
-        board[2][1].config(text="O", state=tk.DISABLED)
-    elif ver_2==["O","","O"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif ver_2==["","O","O"]:
-        board[0][1].config(text="O", state=tk.DISABLED)
-    elif ver_3==["O","O",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif ver_3==["O","","O"]:
-        board[1][2].config(text="O", state=tk.DISABLED)
-    elif ver_3==["","O","O"]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    elif diag_1==["O","O",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif diag_1==["O","","O"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif diag_1==["","O","O"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif diag_2==["O","O",""]:
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif diag_2==["O","","O"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif diag_2==["","O","O"]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    # Check to block user — fill the gap in any X two-in-a-row
-    elif hori_1==["X","X",""]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    elif hori_1==["X","","X"]:
-        board[0][1].config(text="O", state=tk.DISABLED)
-    elif hori_1==["","X","X"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif hori_2==["X","X",""]:
-        board[1][2].config(text="O", state=tk.DISABLED)
-    elif hori_2==["X","","X"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif hori_2==["","X","X"]:
-        board[1][0].config(text="O", state=tk.DISABLED)
-    elif hori_3==["X","X",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif hori_3==["X","","X"]:
-        board[2][1].config(text="O", state=tk.DISABLED)
-    elif hori_3==["","X","X"]:
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["X","X",""] :
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["X","","X"]:
-        board[1][0].config(text="O", state=tk.DISABLED)
-    elif ver_1==["","X","X"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif ver_2==["X","X",""]:
-        board[2][1].config(text="O", state=tk.DISABLED)
-    elif ver_2==["X","","X"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif ver_2==["","X","X"]:
-        board[0][1].config(text="O", state=tk.DISABLED)
-    elif ver_3==["X","X",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif ver_3==["X","","X"]:
-        board[1][2].config(text="O", state=tk.DISABLED)
-    elif ver_3==["","X","X"]:
-        board[0][2].config(text="O", state=tk.DISABLED)
-    elif diag_1==["X","X",""]:
-        board[2][2].config(text="O", state=tk.DISABLED)
-    elif diag_1==["X","","X"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif diag_1==["","X","X"]:
-        board[0][0].config(text="O", state=tk.DISABLED)
-    elif diag_2==["X","X",""]:
-        board[2][0].config(text="O", state=tk.DISABLED)
-    elif diag_2==["X","","X"]:
-        board[1][1].config(text="O", state=tk.DISABLED)
-    elif diag_2==["","X","X"]:
-        board[0][2].config(text="O", state=tk.DISABLED)
+
+    # Build all 8 winning lines as (text_values, button_refs) pairs
+    lines = [
+        # rows
+        ([board[0][0].cget("text"), board[0][1].cget("text"), board[0][2].cget("text")], [board[0][0], board[0][1], board[0][2]]),
+        ([board[1][0].cget("text"), board[1][1].cget("text"), board[1][2].cget("text")], [board[1][0], board[1][1], board[1][2]]),
+        ([board[2][0].cget("text"), board[2][1].cget("text"), board[2][2].cget("text")], [board[2][0], board[2][1], board[2][2]]),
+        # columns
+        ([board[0][0].cget("text"), board[1][0].cget("text"), board[2][0].cget("text")], [board[0][0], board[1][0], board[2][0]]),
+        ([board[0][1].cget("text"), board[1][1].cget("text"), board[2][1].cget("text")], [board[0][1], board[1][1], board[2][1]]),
+        ([board[0][2].cget("text"), board[1][2].cget("text"), board[2][2].cget("text")], [board[0][2], board[1][2], board[2][2]]),
+        # diagonals
+        ([board[0][0].cget("text"), board[1][1].cget("text"), board[2][2].cget("text")], [board[0][0], board[1][1], board[2][2]]),
+        ([board[0][2].cget("text"), board[1][1].cget("text"), board[2][0].cget("text")], [board[0][2], board[1][1], board[2][0]]),
+    ]
+
+    def fill_line(player):
+        """If any line has 2 of `player` and 1 empty, place O in the empty cell. Returns True if placed."""
+        for text_line, btn_line in lines:
+            if text_line.count(player) == 2 and text_line.count("") == 1:
+                btn_line[text_line.index("")].config(text="O", state=tk.DISABLED)
+                return True
+        return False
+
+    # Priority 1: complete O's two-in-a-row to win
+    if fill_line("O"):
+        pass
+    # Priority 2: block X's two-in-a-row
+    elif fill_line("X"):
+        pass
     #Other winning conditions — positional heuristics when no immediate threat exists
     elif cnt!=8:
         #if user starts from corner and plays next on side middle
