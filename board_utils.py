@@ -45,7 +45,7 @@ ACCENT = "#d9b382"
 # ROOT , Title
 root = tk.Tk()
 root.title("Nine Tiles")
-root.geometry("520x620")
+root.geometry("520x640")
 root.configure(bg=BG_MAIN)
 root.resizable(False, False)
 
@@ -195,10 +195,10 @@ def create_game_page(page, title, mode_function):
             btn.grid(
                 row=row,
                 column=col,
-                padx=6,
-                pady=6,
-                ipadx=10,
-                ipady=10
+                padx=5,
+                pady=5,
+                ipadx=8,
+                ipady=8
             )
 
             button_row.append(btn)
