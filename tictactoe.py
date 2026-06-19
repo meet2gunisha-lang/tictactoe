@@ -1,7 +1,7 @@
 import tkinter as tk
 from board_utils import easy_mode, medium_mode, hard_mode, clear_btn
 from tkinter import messagebox, ttk
-from user import register_user, login_user, get_top_players, set_current_user
+from user import register_user, login_user, get_top_players_by_mode, set_current_user
 
 
 # COLORS
@@ -298,49 +298,64 @@ tk.Label(
     font=("Times New Roman", 22, "bold")
 ).pack(pady=20)
 
-# Style the treeview to match the dark theme
+# Shared treeview style
 _lb_style = ttk.Style()
 _lb_style.theme_use("default")
 _lb_style.configure("LB.Treeview",
     background=BG_PANEL,
     foreground=TEXT_LIGHT,
     fieldbackground=BG_PANEL,
-    rowheight=32,
-    font=("Times New Roman", 13)
+    rowheight=26,
+    font=("Times New Roman", 12)
 )
 _lb_style.configure("LB.Treeview.Heading",
     background=BTN_WOOD,
     foreground=TEXT_LIGHT,
-    font=("Times New Roman", 13, "bold"),
+    font=("Times New Roman", 12, "bold"),
     relief="flat"
 )
 _lb_style.map("LB.Treeview", background=[("selected", BTN_HOVER)])
 
-leaderboard_table = ttk.Treeview(
-    leaderboard_page,
-    style="LB.Treeview",
-    columns=("rank", "name", "wins", "ties"),
-    show="headings",
-    height=8
-)
-leaderboard_table.heading("rank", text="#")
-leaderboard_table.heading("name", text="Player")
-leaderboard_table.heading("wins", text="Wins")
-leaderboard_table.heading("ties", text="Ties")
-leaderboard_table.column("rank", width=50,  anchor="center")
-leaderboard_table.column("name", width=180, anchor="center")
-leaderboard_table.column("wins", width=80,  anchor="center")
-leaderboard_table.column("ties", width=80,  anchor="center")
-leaderboard_table.pack(pady=20)
+def make_mode_table(parent, label_text):
+    tk.Label(
+        parent,
+        text=label_text,
+        bg=BG_MAIN,
+        fg=ACCENT,
+        font=("Times New Roman", 13, "bold italic")
+    ).pack(pady=(10, 2))
+    table = ttk.Treeview(
+        parent,
+        style="LB.Treeview",
+        columns=("rank", "name", "wins", "ties"),
+        show="headings",
+        height=4
+    )
+    table.heading("rank", text="#")
+    table.heading("name", text="Player")
+    table.heading("wins", text="Wins")
+    table.heading("ties", text="Ties")
+    table.column("rank", width=40,  anchor="center")
+    table.column("name", width=160, anchor="center")
+    table.column("wins", width=70,  anchor="center")
+    table.column("ties", width=70,  anchor="center")
+    table.pack(pady=(0, 8))
+    return table
+
+lb_table_easy   = make_mode_table(leaderboard_page, "🌿 Easy Mode")
+lb_table_medium = make_mode_table(leaderboard_page, "⚔ Medium Mode")
+lb_table_hard   = make_mode_table(leaderboard_page, "🔥 Hard Mode")
+
+def _fill_table(table, mode):
+    for row in table.get_children():
+        table.delete(row)
+    for rank, (name, wins, ties) in enumerate(get_top_players_by_mode(mode), start=1):
+        table.insert("", tk.END, values=(rank, name, wins, ties))
 
 def refresh_leaderboard():
-    for row in leaderboard_table.get_children():
-        leaderboard_table.delete(row)
-
-    players = get_top_players()
-
-    for rank, (name, wins, losses, ties, total) in enumerate(players, start=1):
-        leaderboard_table.insert("", tk.END, values=(rank, name, wins, ties))
+    _fill_table(lb_table_easy,   "easy")
+    _fill_table(lb_table_medium, "medium")
+    _fill_table(lb_table_hard,   "hard")
 
 tk.Button(
     leaderboard_page,
