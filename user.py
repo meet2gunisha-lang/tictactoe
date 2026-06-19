@@ -263,17 +263,29 @@ def add_hard_ties():
     conn.close()
 
 #leaderboard - per mode
+def _ranked_subquery(mode):
+    """Rank users by (wins + ties) combined score, wins as tiebreaker."""
+    return f"""
+        SELECT
+            ROW_NUMBER() OVER (
+                ORDER BY ({mode}_wins + {mode}_ties) DESC, {mode}_wins DESC
+            ) AS rank,
+            username,
+            {mode}_wins AS wins,
+            {mode}_ties AS ties
+        FROM users
+    """
+
 def get_top_players_by_mode(mode, limit=3):
-    """Return top players for a specific mode.
-    mode: 'easy' | 'medium' | 'hard'
-    Returns: [(username, wins, ties), ...]
+    """Return top `limit` players ranked by combined wins+ties score.
+    Returns: [(rank, username, wins, ties), ...]
     """
     conn = sqlite3.connect("nine_tiles.db")
     cursor = conn.cursor()
     cursor.execute(f"""
-    SELECT username, {mode}_wins AS wins, {mode}_ties AS ties
-    FROM users
-    ORDER BY {mode}_wins DESC, {mode}_ties DESC
+    SELECT rank, username, wins, ties
+    FROM ({_ranked_subquery(mode)})
+    ORDER BY rank
     LIMIT ?
     """, (limit,))
     leaders = cursor.fetchall()
@@ -281,24 +293,17 @@ def get_top_players_by_mode(mode, limit=3):
     return leaders
 
 def get_user_rank_by_mode(mode, username):
-    """Return (rank, wins, ties) for a specific user in a given mode.
-    Rank is 1-based; players with more wins rank higher.
-    Returns None if user not found.
-    """
+    """Return (rank, wins, ties) for a specific user; None if not found."""
     conn = sqlite3.connect("nine_tiles.db")
     cursor = conn.cursor()
-    # rank = number of users with strictly more wins + 1
     cursor.execute(f"""
-    SELECT
-        (SELECT COUNT(*) + 1 FROM users WHERE {mode}_wins > u.{mode}_wins) AS rank,
-        u.{mode}_wins AS wins,
-        u.{mode}_ties AS ties
-    FROM users u
-    WHERE u.username = ?
+    SELECT rank, wins, ties
+    FROM ({_ranked_subquery(mode)})
+    WHERE username = ?
     """, (username,))
     row = cursor.fetchone()
     conn.close()
-    return row  # (rank, wins, ties) or None
+    return row
 
 #leaderboard - total
 def get_top_players():
