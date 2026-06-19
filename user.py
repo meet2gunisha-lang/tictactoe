@@ -263,66 +263,37 @@ def add_hard_ties():
     conn.close()
 
 #leaderboard - per mode
-def _ranked_subquery(mode):
-    """Rank users by (wins + ties) combined score, wins as tiebreaker."""
-    return f"""
-        SELECT
-            ROW_NUMBER() OVER (
-                ORDER BY ({mode}_wins + {mode}_ties) DESC, {mode}_wins DESC
-            ) AS rank,
-            username,
-            {mode}_wins AS wins,
-            {mode}_ties AS ties
-        FROM users
-    """
-
 def get_top_players_by_mode(mode, limit=3):
-    """Return top `limit` players ranked by combined wins+ties score.
-    Returns: [(rank, username, wins, ties), ...]
-    """
+   
     conn = sqlite3.connect("nine_tiles.db")
     cursor = conn.cursor()
     cursor.execute(f"""
-    SELECT rank, username, wins, ties
-    FROM ({_ranked_subquery(mode)})
-    ORDER BY rank
+    SELECT username, {mode}_wins AS wins, {mode}_ties AS ties
+    FROM users
+    ORDER BY {mode}_wins DESC, {mode}_ties DESC
     LIMIT ?
     """, (limit,))
     leaders = cursor.fetchall()
     conn.close()
     return leaders
 
-def get_user_rank_by_mode(mode, username):
-    """Return (rank, wins, ties) for a specific user; None if not found."""
+def get_user_stats_by_mode(mode, username):
     conn = sqlite3.connect("nine_tiles.db")
     cursor = conn.cursor()
     cursor.execute(f"""
-    SELECT rank, wins, ties
-    FROM ({_ranked_subquery(mode)})
-    WHERE username = ?
+    SELECT {mode}_wins, {mode}_ties FROM users WHERE username = ?
     """, (username,))
     row = cursor.fetchone()
     conn.close()
     return row
 
-#leaderboard - total
-def get_top_players():
-
+def get_count_above_score(mode, wins, ties):
     conn = sqlite3.connect("nine_tiles.db")
     cursor = conn.cursor()
-
-    cursor.execute("""
-    SELECT username, (medium_wins + easy_wins + hard_wins) as wins,
-        (medium_losses + easy_losses + hard_losses) as losses,
-        (medium_ties + easy_ties + hard_ties) ties,
-        games_played
-    FROM users
-    ORDER BY wins DESC, ties DESC
-    LIMIT 3
-    """)
-
-    leaders = cursor.fetchall()
-
+    cursor.execute(f"""
+    SELECT COUNT(*) FROM users
+    WHERE {mode}_wins > ? and {mode}_ties > ?
+    """, (wins, ties))
+    count = cursor.fetchone()[0]
     conn.close()
-
-    return leaders
+    return count
