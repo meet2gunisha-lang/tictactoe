@@ -201,7 +201,7 @@ def add_hard_loss():
 
 
 #winss
-def add_easy_tie():
+def add_easy_ties():
 
 
     if not current_user:
@@ -269,12 +269,12 @@ def get_top_players():
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT username, medium_wins + easy_wins + hard_wins,
-        medium_losses + easy_losses + hard_losses,
-        medium_ties + easy_ties + hard_ties,
+    SELECT username, (medium_wins + easy_wins + hard_wins) as wins,
+        (medium_losses + easy_losses + hard_losses) as losses,
+        (medium_ties + easy_ties + hard_ties) ties,
         games_played
     FROM users
-    ORDER BY medium_wins + easy_wins + hard_wins DESC
+    ORDER BY wins, ties DESC
     LIMIT 3
     """)
 
