@@ -355,25 +355,24 @@ def _fill_table(table, mode):
     top3_names = {name for name, _, _ in top3}
 
     rank, prev_wins, prev_ties = 1, None, None
-    for i, (name, wins, ties) in enumerate(top3):
-        if wins != prev_wins and ties != prev_ties:
+    i = 0
+    for  (name, wins, ties) in top3:
+        if (wins != prev_wins or  ties != prev_ties):
             rank = i + 1
         prev_wins = wins
         prev_ties = ties
         table.insert("", tk.END, values=(rank, name, wins, ties))
+        i = i+1
 
-    # Show current user below top 3 if they didn't make it
     me = _user_module.current_user
     if me and me not in top3_names:
         stats = get_user_stats_by_mode(mode, me)
         if stats:
             my_wins, my_ties = stats
 
-            if my_wins == prev_wins and my_ties == prev_ties:
-                # Tied with the last top-3 entry — share the same rank
+            if (my_wins == prev_wins and my_ties == prev_ties):
                 my_rank = rank
             else:
-                # Rank = number of users with a strictly higher score + 1
                 my_rank = get_count_above_score(mode, my_wins, my_ties) + 1
 
             table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
