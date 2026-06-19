@@ -1,4 +1,12 @@
 import sqlite3
+
+# Shared current user state — set via set_current_user() after login
+current_user = None
+
+def set_current_user(username):
+    global current_user
+    current_user = username
+
 def create_database():
 
     conn = sqlite3.connect("nine_tiles.db")
@@ -64,9 +72,7 @@ def login_user(username,password):
 #winss
 def add_medium_win():
 
-    global current_user
-
-    if current_user is None:
+    if not current_user:
         return
 
     conn = sqlite3.connect("nine_tiles.db")
@@ -85,9 +91,7 @@ def add_medium_win():
 #losss
 def add_medium_loss():
 
-    global current_user
-
-    if current_user is None:
+    if not current_user:
         return
 
     conn = sqlite3.connect("nine_tiles.db")

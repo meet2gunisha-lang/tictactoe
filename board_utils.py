@@ -1,6 +1,7 @@
 import tkinter as tk
 import random
 from tkinter import messagebox
+from user import add_medium_win
 
 def clear_btn(buttons):
     not_empty_buttons = [b for row in buttons for b in row]
@@ -30,6 +31,7 @@ def check_winner(board):
     status = check_board(board_text)
     if status=="X": 
         messagebox.showinfo("Game Over","YOU WON 🎉")
+        add_medium_win()
         clear_btn(board)
         return "X"
     elif status=="O": 
