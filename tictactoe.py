@@ -1,16 +1,16 @@
 import tkinter as tk
 from board_utils import easy_mode, medium_mode, hard_mode, clear_btn
 from tkinter import messagebox, ttk
-from user import register_user, login_user, get_top_players_by_mode, get_user_rank_by_mode, set_current_user
-import user as _user_module
+from user import *
+import user as user_module
 
 
 # COLORS
-BG_MAIN = "#2b1d16"       # dark wood
-BG_PANEL = "#4a2c1d"      # brown
-BTN_WOOD = "#8b5a2b"      # wood button
+BG_MAIN = "#2b1d16"       
+BG_PANEL = "#4a2c1d"      
+BTN_WOOD = "#8b5a2b"     
 BTN_HOVER = "#a06a3b"
-TEXT_LIGHT = "#f5e6cc"    # parchment
+TEXT_LIGHT = "#f5e6cc"    
 GRID_COLOR = "#c89b6d"
 ACCENT = "#d9b382"
 # ROOT , Title
@@ -35,7 +35,6 @@ def on_enter(e):
 def on_leave(e):
     e.widget['background'] = BTN_WOOD
 
-#Button aesthetics
 def style_button(btn):
     btn.configure(
         bg=BTN_WOOD,
@@ -78,7 +77,7 @@ tk.Label(
     text="Login to Continue",
     bg=BG_MAIN,
     fg=ACCENT,
-    font=("Times New Roman", 12, "italic")
+    font=("Times New Roman", 18, "italic")
 ).pack(pady=5)
 
 # USERNAME LABEL
@@ -87,11 +86,12 @@ tk.Label(
     login_page,
     text="Username",
     bg=BG_MAIN,
-    fg=TEXT_LIGHT
+    fg=TEXT_LIGHT,
+    font=("Times New Roman", 14)
 ).pack()
 
-username_entry = tk.Entry(login_page, width=25)
-username_entry.pack(pady=5)
+username_entry = tk.Entry(login_page, width=25, font=("Times New Roman", 14))
+username_entry.pack(pady=10)
 
 # PASSWORD LABEL
 
@@ -99,11 +99,12 @@ tk.Label(
     login_page,
     text="Password",
     bg=BG_MAIN,
-    fg=TEXT_LIGHT
+    fg=TEXT_LIGHT,
+    font=("Times New Roman", 14)
 ).pack()
 
-password_entry = tk.Entry(login_page, width=25, show="*")
-password_entry.pack(pady=5)
+password_entry = tk.Entry(login_page, width=25, show="*",  font=("Times New Roman", 14))
+password_entry.pack(pady=10)
 
 def login_clicked():
 
@@ -120,7 +121,9 @@ def login_clicked():
             "Success",
             f"Welcome {username}"
         )
-
+        subtitle.config(text=f"～ Good Luck, {username} ～")
+        username_entry.delete(0,tk.END)
+        password_entry.delete(0,tk.END)
         show_frame(menu_page)
 
     else:
@@ -130,17 +133,40 @@ def login_clicked():
             "Invalid Username or Password"
         )
 
-tk.Button(
+login_btn = tk.Button(
     login_page,
     text="Login",
+    width=14,
+    height=1,
     command=login_clicked
-).pack(pady=10)
+)
+style_button(login_btn)
+login_btn.pack(pady=10)
 
-tk.Button(
+new_acnt_btn = tk.Button(
     login_page,
     text="Create New Account",
-    command=lambda: show_frame(register_page)
-).pack(pady=5)
+    width=18,
+    height=1,
+    command=lambda: (
+        show_frame(register_page),
+        username_entry.delete(0,tk.END),
+        password_entry.delete(0,tk.END)
+        )
+)
+style_button(new_acnt_btn)
+new_acnt_btn.pack(pady=10)
+
+exit_btn = tk.Button(
+    login_page,
+    text="Exit",
+    width=14,
+    height=1,
+    command=root.destroy
+)
+style_button(exit_btn)
+exit_btn.pack(pady=10)
+
 
 #registerrr
 
@@ -158,7 +184,7 @@ tk.Label(
     text="Login to Continue",
     bg=BG_MAIN,
     fg=ACCENT,
-    font=("Times New Roman", 12, "italic")
+    font=("Times New Roman", 18, "italic")
 ).pack(pady=5)
 
 # USERNAME LABEL
@@ -167,13 +193,14 @@ tk.Label(
     register_page,
     text="Username",
     bg=BG_MAIN,
-    fg=TEXT_LIGHT
+    fg=TEXT_LIGHT,
+    font=("Times New Roman", 14)
 ).pack()
 
 
 # Register username box
-new_user_entry = tk.Entry(register_page, width=25)
-new_user_entry.pack(pady=5)
+new_user_entry = tk.Entry(register_page, width=25, font=("Times New Roman", 14))
+new_user_entry.pack(pady=10)
 
 # PASSWORD LABEL
 
@@ -181,16 +208,17 @@ tk.Label(
     register_page,
     text="Password",
     bg=BG_MAIN,
-    fg=TEXT_LIGHT
+    fg=TEXT_LIGHT,
+    font=("Times New Roman", 14)
 ).pack()
 
 
 # Register password box
-new_pass_entry = tk.Entry(register_page, width=25, show="*")
-new_pass_entry.pack(pady=5)
+new_pass_entry = tk.Entry(register_page, width=25, show="*", font=("Times New Roman", 14))
+new_pass_entry.pack(pady=10)
 
 def register_clicked():
-    
+
     username = new_user_entry.get().strip()
     password = new_pass_entry.get().strip()
 
@@ -217,17 +245,25 @@ def register_clicked():
             "Username Already Exists"
         )
 
-tk.Button(
+create_acnt_btn = tk.Button(
     register_page,
     text="Create Account",
+    width=14,
+    height=1,
     command=register_clicked
-).pack(pady=10)
+)
+style_button(create_acnt_btn)
+create_acnt_btn.pack(pady=10)
 
-tk.Button(
+back_login_btn = tk.Button(
     register_page,
     text="Back to Login",
+    width=14,
+    height=1,
     command=lambda: show_frame(login_page)
-).pack(pady=10)
+)
+style_button(back_login_btn)
+back_login_btn.pack(pady=10)
 
 # TITLE
 menu_title = tk.Label(
@@ -241,7 +277,6 @@ menu_title.pack(pady=40)
 
 subtitle = tk.Label(
     menu_page,
-    text="～ Good Luck, Wanderer ～",
     bg=BG_MAIN,
     fg=ACCENT,
     font=("Times New Roman", 14, "italic")
@@ -280,42 +315,36 @@ btn_hard.pack(pady=15)
 
 exit_btn = tk.Button(
     menu_page,
-    text="Exit",
+    text="Logout",
     width=14,
     height=2,
-    command=root.destroy
+    command=lambda: show_frame(login_page)
 )
 style_button(exit_btn)
-exit_btn.pack(pady=35)
-
-#leaderboard page stuff
-# LEADERBOARD PAGE
+exit_btn.pack(pady=15)
 
 tk.Label(
     leaderboard_page,
     text=" LEADERBOARD ",
     bg=BG_MAIN,
     fg=TEXT_LIGHT,
-    font=("Times New Roman", 22, "bold")
-).pack(pady=20)
+    font=("Times New Roman", 20, "bold")
+).pack(pady=10)
 
-# Shared treeview style
-_lb_style = ttk.Style()
-_lb_style.theme_use("default")
-_lb_style.configure("LB.Treeview",
+lb_style = ttk.Style()
+lb_style.theme_use("default")
+lb_style.configure("LB.Treeview",
     background=BG_PANEL,
     foreground=TEXT_LIGHT,
     fieldbackground=BG_PANEL,
-    rowheight=26,
+    rowheight=25,
     font=("Times New Roman", 12)
 )
-_lb_style.configure("LB.Treeview.Heading",
+lb_style.configure("LB.Treeview.Heading",
     background=BTN_WOOD,
     foreground=TEXT_LIGHT,
-    font=("Times New Roman", 12, "bold"),
-    relief="flat"
+    font=("Times New Roman", 12, "bold")
 )
-_lb_style.map("LB.Treeview", background=[("selected", BTN_HOVER)])
 
 def make_mode_table(parent, label_text):
     tk.Label(
@@ -347,34 +376,52 @@ lb_table_easy   = make_mode_table(leaderboard_page, "🌿 Easy Mode")
 lb_table_medium = make_mode_table(leaderboard_page, "⚔ Medium Mode")
 lb_table_hard   = make_mode_table(leaderboard_page, "🔥 Hard Mode")
 
-def _fill_table(table, mode):
+def fill_table(table, mode):
     for row in table.get_children():
         table.delete(row)
 
     top3 = get_top_players_by_mode(mode, limit=3)
     top3_names = {name for name, _, _ in top3}
 
-    for rank, (name, wins, ties) in enumerate(top3, start=1):
+    rank, prev_wins, prev_ties = 1, None, None
+    i = 0
+    for  (name, wins, ties) in top3:
+        if (wins != prev_wins or  ties != prev_ties):
+            rank = i + 1
+        prev_wins = wins
+        prev_ties = ties
         table.insert("", tk.END, values=(rank, name, wins, ties))
+        i = i+1
 
-    # Show current user below top 3 if they didn't make it
-    me = _user_module.current_user
+    me = user_module.current_user
     if me and me not in top3_names:
-        result = get_user_rank_by_mode(mode, me)
-        if result:
-            my_rank, my_wins, my_ties = result
+        stats = get_user_stats_by_mode(mode, me)
+        if stats:
+            my_wins, my_ties = stats
+
+            if (my_wins == prev_wins and my_ties == prev_ties):
+                my_rank = rank
+            else:
+                my_rank = get_count_above_score(mode, my_wins, my_ties) + 1
+
             table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
 
 def refresh_leaderboard():
-    _fill_table(lb_table_easy,   "easy")
-    _fill_table(lb_table_medium, "medium")
-    _fill_table(lb_table_hard,   "hard")
+    fill_table(lb_table_easy,   "easy")
+    fill_table(lb_table_medium, "medium")
+    fill_table(lb_table_hard,   "hard")
 
-tk.Button(
-    leaderboard_page,
-    text="Back",
-    command=lambda: show_frame(menu_page)
-).pack(pady=10)
+
+back_btn = tk.Button(
+        leaderboard_page,
+        text="Return to Menu",
+        width=18,
+        height=2,
+        command=lambda:show_frame(menu_page)
+    )
+
+style_button(back_btn)
+back_btn.pack(pady=10)
 
 btn_leaderboard = tk.Button(
     menu_page,
@@ -388,9 +435,8 @@ btn_leaderboard = tk.Button(
 )
 
 style_button(btn_leaderboard)
-btn_leaderboard.pack(pady=15)
+btn_leaderboard.pack(pady=10)
 
-# GRID
 def create_game_page(page, title, mode_function):
 
     title_label = tk.Label(
@@ -462,7 +508,6 @@ def create_game_page(page, title, mode_function):
 
     return buttons
 
-#game pages
 button_easy = create_game_page(
     easy_page,
     "🌿 Easy Mode",
@@ -481,6 +526,5 @@ button_hard = create_game_page(
     hard_mode
 )
 
-#menu priority
 show_frame(login_page)
 root.mainloop()

@@ -61,7 +61,6 @@ def register_user(username,password):
         conn.close()
        
 
-#login stuff
 def login_user(username,password):
 
     conn = sqlite3.connect("nine_tiles.db")
@@ -78,8 +77,8 @@ def login_user(username,password):
 
     return user
 
-#winss
-def add_easy_win():
+
+def add_status(mode, status):
 
 
     if not current_user:
@@ -88,9 +87,9 @@ def add_easy_win():
     conn = sqlite3.connect("nine_tiles.db")
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(f"""
     UPDATE users
-    SET easy_wins = easy_wins + 1,
+    SET {mode}_{status} = {mode}_{status} + 1,
         games_played = games_played + 1
     WHERE username = ?
     """,(current_user,))
@@ -98,176 +97,8 @@ def add_easy_win():
     conn.commit()
     conn.close()
 
-#losss
-def add_easy_loss():
-
-    if not current_user:
-        return
-
-    conn = sqlite3.connect("nine_tiles.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE users
-    SET easy_losses = easy_losses + 1,
-        games_played = games_played + 1
-    WHERE username = ?
-    """,(current_user,))
-
-    conn.commit()
-    conn.close()
-
-
-#winss
-def add_medium_win():
-
-
-    if not current_user:
-        return
-
-    conn = sqlite3.connect("nine_tiles.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE users
-    SET medium_wins = medium_wins + 1,
-        games_played = games_played + 1
-    WHERE username = ?
-    """,(current_user,))
-
-    conn.commit()
-    conn.close()
-
-#losss
-def add_medium_loss():
-
-    if not current_user:
-        return
-
-    conn = sqlite3.connect("nine_tiles.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE users
-    SET medium_losses = medium_losses + 1,
-        games_played = games_played + 1
-    WHERE username = ?
-    """,(current_user,))
-
-    conn.commit()
-    conn.close()
-
-
-
-#winss
-def add_hard_win():
-
-
-    if not current_user:
-        return
-
-    conn = sqlite3.connect("nine_tiles.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE users
-    SET hard_wins = hard_wins + 1,
-        games_played = games_played + 1
-    WHERE username = ?
-    """,(current_user,))
-
-    conn.commit()
-    conn.close()
-
-#losss
-def add_hard_loss():
-
-    if not current_user:
-        return
-
-    conn = sqlite3.connect("nine_tiles.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE users
-    SET hard_losses = hard_losses + 1,
-        games_played = games_played + 1
-    WHERE username = ?
-    """,(current_user,))
-
-    conn.commit()
-    conn.close()
-
-
-
-#winss
-def add_easy_ties():
-
-
-    if not current_user:
-        return
-
-    conn = sqlite3.connect("nine_tiles.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE users
-    SET easy_ties = easy_ties + 1,
-        games_played = games_played + 1
-    WHERE username = ?
-    """,(current_user,))
-
-    conn.commit()
-    conn.close()
-
-#losss
-def add_medium_ties():
-
-    if not current_user:
-        return
-
-    conn = sqlite3.connect("nine_tiles.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE users
-    SET medium_ties = medium_ties + 1,
-        games_played = games_played + 1
-    WHERE username = ?
-    """,(current_user,))
-
-    conn.commit()
-    conn.close()
-
-
-
-
-#winss
-def add_hard_ties():
-
-
-    if not current_user:
-        return
-
-    conn = sqlite3.connect("nine_tiles.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE users
-    SET hard_ties = hard_ties + 1,
-        games_played = games_played + 1
-    WHERE username = ?
-    """,(current_user,))
-
-    conn.commit()
-    conn.close()
-
-#leaderboard - per mode
 def get_top_players_by_mode(mode, limit=3):
-    """Return top players for a specific mode.
-    mode: 'easy' | 'medium' | 'hard'
-    Returns: [(username, wins, ties), ...]
-    """
+   
     conn = sqlite3.connect("nine_tiles.db")
     cursor = conn.cursor()
     cursor.execute(f"""
@@ -280,44 +111,23 @@ def get_top_players_by_mode(mode, limit=3):
     conn.close()
     return leaders
 
-def get_user_rank_by_mode(mode, username):
-    """Return (rank, wins, ties) for a specific user in a given mode.
-    Rank is 1-based; players with more wins rank higher.
-    Returns None if user not found.
-    """
+def get_user_stats_by_mode(mode, username):
     conn = sqlite3.connect("nine_tiles.db")
     cursor = conn.cursor()
-    # rank = number of users with strictly more wins + 1
     cursor.execute(f"""
-    SELECT
-        (SELECT COUNT(*) + 1 FROM users WHERE {mode}_wins > u.{mode}_wins) AS rank,
-        u.{mode}_wins AS wins,
-        u.{mode}_ties AS ties
-    FROM users u
-    WHERE u.username = ?
+    SELECT {mode}_wins, {mode}_ties FROM users WHERE username = ?
     """, (username,))
     row = cursor.fetchone()
     conn.close()
-    return row  # (rank, wins, ties) or None
+    return row
 
-#leaderboard - total
-def get_top_players():
-
+def get_count_above_score(mode, wins, ties):
     conn = sqlite3.connect("nine_tiles.db")
     cursor = conn.cursor()
-
-    cursor.execute("""
-    SELECT username, (medium_wins + easy_wins + hard_wins) as wins,
-        (medium_losses + easy_losses + hard_losses) as losses,
-        (medium_ties + easy_ties + hard_ties) ties,
-        games_played
-    FROM users
-    ORDER BY wins DESC, ties DESC
-    LIMIT 3
-    """)
-
-    leaders = cursor.fetchall()
-
+    cursor.execute(f"""
+    SELECT COUNT(*) FROM users
+    WHERE {mode}_wins > ? or ( {mode}_wins = ? and {mode}_ties > ? )
+    """, (wins, wins, ties))
+    count = cursor.fetchone()[0]
     conn.close()
-
-    return leaders
+    return count
