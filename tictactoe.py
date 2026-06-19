@@ -1,16 +1,16 @@
 import tkinter as tk
 from board_utils import easy_mode, medium_mode, hard_mode, clear_btn
 from tkinter import messagebox, ttk
-from user import register_user, login_user, get_top_players_by_mode, get_user_stats_by_mode, get_count_above_score, set_current_user
-import user as _user_module
+from user import *
+import user as user_module
 
 
 # COLORS
-BG_MAIN = "#2b1d16"       # dark wood
-BG_PANEL = "#4a2c1d"      # brown
-BTN_WOOD = "#8b5a2b"      # wood button
+BG_MAIN = "#2b1d16"       
+BG_PANEL = "#4a2c1d"      
+BTN_WOOD = "#8b5a2b"     
 BTN_HOVER = "#a06a3b"
-TEXT_LIGHT = "#f5e6cc"    # parchment
+TEXT_LIGHT = "#f5e6cc"    
 GRID_COLOR = "#c89b6d"
 ACCENT = "#d9b382"
 # ROOT , Title
@@ -35,7 +35,6 @@ def on_enter(e):
 def on_leave(e):
     e.widget['background'] = BTN_WOOD
 
-#Button aesthetics
 def style_button(btn):
     btn.configure(
         bg=BTN_WOOD,
@@ -324,9 +323,6 @@ exit_btn = tk.Button(
 style_button(exit_btn)
 exit_btn.pack(pady=15)
 
-#leaderboard page stuff
-# LEADERBOARD PAGE
-
 tk.Label(
     leaderboard_page,
     text=" LEADERBOARD ",
@@ -335,23 +331,20 @@ tk.Label(
     font=("Times New Roman", 20, "bold")
 ).pack(pady=10)
 
-# Shared treeview style
-_lb_style = ttk.Style()
-_lb_style.theme_use("default")
-_lb_style.configure("LB.Treeview",
+lb_style = ttk.Style()
+lb_style.theme_use("default")
+lb_style.configure("LB.Treeview",
     background=BG_PANEL,
     foreground=TEXT_LIGHT,
     fieldbackground=BG_PANEL,
     rowheight=25,
     font=("Times New Roman", 12)
 )
-_lb_style.configure("LB.Treeview.Heading",
+lb_style.configure("LB.Treeview.Heading",
     background=BTN_WOOD,
     foreground=TEXT_LIGHT,
-    font=("Times New Roman", 12, "bold"),
-    relief="flat"
+    font=("Times New Roman", 12, "bold")
 )
-_lb_style.map("LB.Treeview", background=[("selected", BTN_HOVER)])
 
 def make_mode_table(parent, label_text):
     tk.Label(
@@ -383,7 +376,7 @@ lb_table_easy   = make_mode_table(leaderboard_page, "🌿 Easy Mode")
 lb_table_medium = make_mode_table(leaderboard_page, "⚔ Medium Mode")
 lb_table_hard   = make_mode_table(leaderboard_page, "🔥 Hard Mode")
 
-def _fill_table(table, mode):
+def fill_table(table, mode):
     for row in table.get_children():
         table.delete(row)
 
@@ -400,7 +393,7 @@ def _fill_table(table, mode):
         table.insert("", tk.END, values=(rank, name, wins, ties))
         i = i+1
 
-    me = _user_module.current_user
+    me = user_module.current_user
     if me and me not in top3_names:
         stats = get_user_stats_by_mode(mode, me)
         if stats:
@@ -414,9 +407,9 @@ def _fill_table(table, mode):
             table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
 
 def refresh_leaderboard():
-    _fill_table(lb_table_easy,   "easy")
-    _fill_table(lb_table_medium, "medium")
-    _fill_table(lb_table_hard,   "hard")
+    fill_table(lb_table_easy,   "easy")
+    fill_table(lb_table_medium, "medium")
+    fill_table(lb_table_hard,   "hard")
 
 
 back_btn = tk.Button(
@@ -444,7 +437,6 @@ btn_leaderboard = tk.Button(
 style_button(btn_leaderboard)
 btn_leaderboard.pack(pady=10)
 
-# GRID
 def create_game_page(page, title, mode_function):
 
     title_label = tk.Label(
@@ -516,7 +508,6 @@ def create_game_page(page, title, mode_function):
 
     return buttons
 
-#game pages
 button_easy = create_game_page(
     easy_page,
     "🌿 Easy Mode",
@@ -535,6 +526,5 @@ button_hard = create_game_page(
     hard_mode
 )
 
-#menu priority
 show_frame(login_page)
 root.mainloop()
