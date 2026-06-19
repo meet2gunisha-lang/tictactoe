@@ -1,7 +1,7 @@
 import tkinter as tk
 import random
 from tkinter import messagebox
-from user import add_medium_win
+from user import *
 
 def clear_btn(buttons):
     not_empty_buttons = [b for row in buttons for b in row]
@@ -26,21 +26,38 @@ def check_board(board_text):
     if all(board_text[r][c] != "" for r in range(3) for c in range(3)): return "tie"
     return None
 
-def check_winner(board):    
+def check_winner(board, mode):    
     board_text=[[board[r][c].cget("text") for c in range(3)] for r in range(3)]
     status = check_board(board_text)
     if status=="X": 
         messagebox.showinfo("Game Over","YOU WON 🎉")
-        add_medium_win()
         clear_btn(board)
+        if mode == "E":
+            add_easy_win()
+        elif mode == "M":
+            add_medium_win()
+        else:
+            add_hard_win()
         return "X"
     elif status=="O": 
         messagebox.showinfo("Game Over","Computer Won 😔")
         clear_btn(board)
+        if mode == "E":
+            add_easy_loss()
+        elif mode == "M":
+            add_medium_loss()
+        else:
+            add_hard_loss()
         return "O"
     elif status=="tie":
         messagebox.showinfo("Game Over","It's a Tie 😐")
         clear_btn(board)
+        if mode == "E":
+            add_easy_ties()
+        elif mode == "M":
+            add_medium_ties()
+        else:
+            add_hard_ties()
         return "tie"
     return 0
 
@@ -49,12 +66,12 @@ def easy_mode(btn, board):
         btn.config(text="X",state=tk.DISABLED)
         # flatten + filter for empty buttons
         empty_buttons = [b for row in board for b in row if b.cget("text") == ""]
-        win=check_winner(board)
+        win=check_winner(board, "E")
         if win==0:
             if empty_buttons:     # only if any are left
                 ai_btn = random.choice(empty_buttons)
                 ai_btn.config(text="O", state=tk.DISABLED)
-        check_winner(board)
+        check_winner(board, "E")
 
 #Computer logic
 def medium_mode(btn, board):
@@ -64,9 +81,9 @@ def medium_mode(btn, board):
         board=[[board[r][c] for c in range (3)]for r in range (3)]
         empty_buttons = [b for row in board for b in row if b.cget("text") == ""]
         cnt=len(empty_buttons)
-        win=check_winner(board)
+        win=check_winner(board, "M")
         if cnt==0:
-            win=check_winner(board)
+            win=check_winner(board, "M")
         elif win==0:
             check_medium(cnt, board)
         if cnt==8:
@@ -75,7 +92,7 @@ def medium_mode(btn, board):
                 ai_btn.config(text="O", state=tk.DISABLED)
             else:
                 board[1][1].config(text="O", state=tk.DISABLED)
-        check_winner(board)
+        check_winner(board, "M")
 
 def check_medium(cnt, board):
     board=[[board[r][c] for c in range (3)]for r in range (3)]
@@ -263,15 +280,15 @@ def hard_mode(btn, board):
         board_text=[[board[r][c].cget("text") for c in range(3)] for r in range(3)]
         empty_buttons=[b for row in board for b in row if b.cget("text")==""]
         cnt=len(empty_buttons)
-        win=check_winner(board)
+        win=check_winner(board, "H")
         if cnt==0:
-            win=check_winner(board)
+            win=check_winner(board, "H")
         elif win==0:
             pos=best_move(board_text)
             if pos:
                 r,c=pos
                 board[r][c].config(text="O",state=tk.DISABLED)
-        check_winner(board)
+        check_winner(board, "H")
 
 def best_move(board):
     """Return (row, col) of the best move for O using minimax."""
