@@ -376,7 +376,6 @@ def _fill_table(table, mode):
                 # Rank = number of users with a strictly higher score + 1
                 my_rank = get_count_above_score(mode, my_wins, my_ties) + 1
 
-            table.insert("", tk.END, values=("—", "", "", ""))
             table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
 
 def refresh_leaderboard():
