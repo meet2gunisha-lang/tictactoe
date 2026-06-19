@@ -323,7 +323,7 @@ def make_mode_table(parent, label_text):
         text=label_text,
         bg=BG_MAIN,
         fg=ACCENT,
-        font=("Times New Roman", 13, "bold italic")
+        font=("Times New Roman", 12, "bold italic")
     ).pack(pady=(10, 2))
     table = ttk.Treeview(
         parent,
@@ -352,9 +352,9 @@ def _fill_table(table, mode):
         table.delete(row)
 
     top3 = get_top_players_by_mode(mode, limit=3)
-    top3_names = {name for name, _, _ in top3}
+    top3_names = {name for _, name, _, _ in top3}
 
-    for rank, (name, wins, ties) in enumerate(top3, start=1):
+    for rank, name, wins, ties in top3:
         table.insert("", tk.END, values=(rank, name, wins, ties))
 
     # Show current user below top 3 if they didn't make it
@@ -363,7 +363,6 @@ def _fill_table(table, mode):
         result = get_user_rank_by_mode(mode, me)
         if result:
             my_rank, my_wins, my_ties = result
-            table.insert("", tk.END, values=("—", "", "", ""))   # separator
             table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
 
 def refresh_leaderboard():
