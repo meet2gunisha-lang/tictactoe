@@ -1,38 +1,7 @@
 import tkinter as tk
 from board_utils import easy_mode, medium_mode, hard_mode, clear_btn
-import random
 from tkinter import messagebox
-import json
-import os
-DB_FILE="stats.json"
-#databse stuff
-def load_stats():
-
-    if not os.path.exists(DB_FILE):
-
-        stats = {
-            "player_wins": 0,
-            "computer_wins": 0,
-            "draws": 0,
-            "games_played": 0
-        }
-
-        with open(DB_FILE, "w") as file:
-            json.dump(stats, file)
-
-        return stats
-
-    with open(DB_FILE, "r") as file:
-        return json.load(file)
-def save_stats(stats):
-
-    with open(DB_FILE, "w") as file:
-        json.dump(stats, file, indent=4)
-
-stats=load_stats()
-#USER INTERFACE
-
-import tkinter as tk
+from user import create_database, register_user, login_user, add_medium_win, add_medium_loss, get_top_players
 
 # COLORS
 BG_MAIN = "#2b1d16"       # dark wood
@@ -81,13 +50,132 @@ def style_button(btn):
     btn.bind("<Leave>", on_leave)
 
 #PAGES
+login_page = tk.Frame(root, bg=BG_MAIN)
+register_page = tk.Frame(root, bg=BG_MAIN)
+
 menu_page = tk.Frame(root, bg=BG_MAIN)
 easy_page = tk.Frame(root, bg=BG_MAIN)
 medium_page = tk.Frame(root, bg=BG_MAIN)
 hard_page = tk.Frame(root, bg=BG_MAIN)
+leaderboard_page=tk.Frame(root,bg=BG_MAIN)
 
-for frame in (menu_page, easy_page, medium_page, hard_page):
+for frame in (login_page,register_page,menu_page, easy_page, medium_page, hard_page,leaderboard_page):
     frame.grid(row=0, column=0, sticky="nsew")
+
+#LOGIN PAGESS
+tk.Label(
+    login_page,
+    text="◈ NINE TILES ◈",
+    bg=BG_MAIN,
+    fg=TEXT_LIGHT,
+    font=("Times New Roman", 24, "bold")
+).pack(pady=30)
+
+tk.Label(
+    login_page,
+    text="Login to Continue",
+    bg=BG_MAIN,
+    fg=ACCENT,
+    font=("Times New Roman", 12, "italic")
+).pack(pady=5)
+
+# USERNAME LABEL
+
+tk.Label(
+    login_page,
+    text="Username",
+    bg=BG_MAIN,
+    fg=TEXT_LIGHT
+).pack()
+
+username_entry = tk.Entry(login_page, width=25)
+username_entry.pack(pady=5)
+
+# PASSWORD LABEL
+
+tk.Label(
+    login_page,
+    text="Password",
+    bg=BG_MAIN,
+    fg=TEXT_LIGHT
+).pack()
+
+password_entry = tk.Entry(login_page, width=25, show="*")
+password_entry.pack(pady=5)
+
+def login_clicked():
+
+    global current_user
+
+    username = username_entry.get()
+    password = password_entry.get()
+
+    if login_user(username, password):
+
+        current_user = username
+
+        messagebox.showinfo(
+            "Success",
+            f"Welcome {username}"
+        )
+
+        show_frame(menu_page)
+
+    else:
+
+        messagebox.showerror(
+            "Error",
+            "Invalid Username or Password"
+        )
+
+tk.Button(
+    login_page,
+    text="Login",
+    command=login_clicked
+).pack(pady=10)
+
+tk.Button(
+    login_page,
+    text="Create New Account",
+    command=lambda: show_frame(register_page)
+).pack(pady=5)
+
+#registerrr
+# Register username box
+new_user_entry = tk.Entry(register_page, width=25)
+new_user_entry.pack(pady=10)
+
+# Register password box
+new_pass_entry = tk.Entry(register_page, width=25, show="*")
+new_pass_entry.pack(pady=10)
+
+def register_clicked():
+
+    username = new_user_entry.get()
+    password = new_pass_entry.get()
+   
+
+    if register_user(username, password):
+
+        messagebox.showinfo(
+            "Success",
+            "Account Created"
+        )
+
+        show_frame(login_page)
+
+    else:
+
+        messagebox.showerror(
+            "Error",
+            "Username Already Exists"
+        )
+
+tk.Button(
+    register_page,
+    text="Create Account",
+    command=register_clicked
+).pack(pady=10)
 
 
 # TITLE
@@ -148,6 +236,66 @@ exit_btn = tk.Button(
 )
 style_button(exit_btn)
 exit_btn.pack(pady=35)
+
+#leaderboard page stuff
+# LEADERBOARD PAGE
+
+tk.Label(
+    leaderboard_page,
+    text=" LEADERBOARD ",
+    bg=BG_MAIN,
+    fg=TEXT_LIGHT,
+    font=("Times New Roman", 22, "bold")
+).pack(pady=20)
+
+leaderboard_text = tk.Text(
+    leaderboard_page,
+    height=10,
+    width=30,
+    font=("Times New Roman", 14)
+)
+
+leaderboard_text.pack(pady=20)
+
+def refresh_leaderboard():
+
+    leaderboard_text.config(state="normal")
+    leaderboard_text.delete("1.0", tk.END)
+
+    players = get_top_players()
+
+    rank = 1
+
+    for name, wins in players:
+
+        leaderboard_text.insert(
+            tk.END,
+            f"{rank}. {name} - {wins} wins\n"
+        )
+
+        rank += 1
+
+    leaderboard_text.config(state="disabled")
+
+tk.Button(
+    leaderboard_page,
+    text="Back",
+    command=lambda: show_frame(menu_page)
+).pack(pady=10)
+
+btn_leaderboard = tk.Button(
+    menu_page,
+    text="Leaderboard",
+    width=20,
+    height=2,
+    command=lambda: (
+        refresh_leaderboard(),
+        show_frame(leaderboard_page)
+    )
+)
+
+style_button(btn_leaderboard)
+btn_leaderboard.pack(pady=15)
 
 # GRID
 def create_game_page(page, title, mode_function):
@@ -241,5 +389,14 @@ button_hard = create_game_page(
 )
 
 #menu priority
-show_frame(menu_page)
+show_frame(login_page)
+
+# macOS: force window focus so Entry widgets accept keyboard input
+def focus_fix():
+    root.lift()
+    root.attributes('-topmost', True)
+    root.after(100, lambda: root.attributes('-topmost', False))
+    username_entry.focus_set()
+
+root.after(100, focus_fix)
 root.mainloop()

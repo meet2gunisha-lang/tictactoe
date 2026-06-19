@@ -1,0 +1,6 @@
+nine_tiles.db
+stats.json
+.vscode/settings.json
+__pycache__/board_utils.cpython-311.pyc
+__pycache__/tictactoe.cpython-311.pyc
+__pycache__/user.cpython-311.pyc
