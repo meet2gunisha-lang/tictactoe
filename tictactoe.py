@@ -1,6 +1,6 @@
 import tkinter as tk
 from board_utils import easy_mode, medium_mode, hard_mode, clear_btn
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 from user import register_user, login_user, get_top_players, set_current_user
 
 
@@ -298,34 +298,49 @@ tk.Label(
     font=("Times New Roman", 22, "bold")
 ).pack(pady=20)
 
-leaderboard_text = tk.Text(
-    leaderboard_page,
-    height=20,
-    width=40,
-    font=("Times New Roman", 14)
+# Style the treeview to match the dark theme
+_lb_style = ttk.Style()
+_lb_style.theme_use("default")
+_lb_style.configure("LB.Treeview",
+    background=BG_PANEL,
+    foreground=TEXT_LIGHT,
+    fieldbackground=BG_PANEL,
+    rowheight=32,
+    font=("Times New Roman", 13)
 )
+_lb_style.configure("LB.Treeview.Heading",
+    background=BTN_WOOD,
+    foreground=TEXT_LIGHT,
+    font=("Times New Roman", 13, "bold"),
+    relief="flat"
+)
+_lb_style.map("LB.Treeview", background=[("selected", BTN_HOVER)])
 
-leaderboard_text.pack(pady=20)
+leaderboard_table = ttk.Treeview(
+    leaderboard_page,
+    style="LB.Treeview",
+    columns=("rank", "name", "wins", "ties"),
+    show="headings",
+    height=8
+)
+leaderboard_table.heading("rank", text="#")
+leaderboard_table.heading("name", text="Player")
+leaderboard_table.heading("wins", text="Wins")
+leaderboard_table.heading("ties", text="Ties")
+leaderboard_table.column("rank", width=50,  anchor="center")
+leaderboard_table.column("name", width=180, anchor="center")
+leaderboard_table.column("wins", width=80,  anchor="center")
+leaderboard_table.column("ties", width=80,  anchor="center")
+leaderboard_table.pack(pady=20)
 
 def refresh_leaderboard():
-
-    leaderboard_text.config(state="normal")
-    leaderboard_text.delete("1.0", tk.END)
+    for row in leaderboard_table.get_children():
+        leaderboard_table.delete(row)
 
     players = get_top_players()
 
-    rank = 1
-
-    for name, wins, losses, ties, total in players:
-
-        leaderboard_text.insert(
-            tk.END,
-            f"{rank}. {name}:  {wins} Wins, {ties} Ties\n"
-        )
-
-        rank += 1
-
-    leaderboard_text.config(state="disabled")
+    for rank, (name, wins, losses, ties, total) in enumerate(players, start=1):
+        leaderboard_table.insert("", tk.END, values=(rank, name, wins, ties))
 
 tk.Button(
     leaderboard_page,
