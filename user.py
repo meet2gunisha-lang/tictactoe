@@ -292,8 +292,8 @@ def get_count_above_score(mode, wins, ties):
     cursor = conn.cursor()
     cursor.execute(f"""
     SELECT COUNT(*) FROM users
-    WHERE {mode}_wins > ? and {mode}_ties > ?
-    """, (wins, ties))
+    WHERE {mode}_wins > ? or ( {mode}_wins = ? and {mode}_ties > ? )
+    """, (wins, wins, ties))
     count = cursor.fetchone()[0]
     conn.close()
     return count
