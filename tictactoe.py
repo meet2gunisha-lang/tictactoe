@@ -1,7 +1,8 @@
 import tkinter as tk
 from board_utils import easy_mode, medium_mode, hard_mode, clear_btn
-from tkinter import messagebox
-from user import register_user, login_user, get_top_players, set_current_user
+from tkinter import messagebox, ttk
+from user import register_user, login_user, get_top_players_by_mode, get_user_rank_by_mode, set_current_user
+import user as _user_module
 
 
 # COLORS
@@ -298,34 +299,76 @@ tk.Label(
     font=("Times New Roman", 22, "bold")
 ).pack(pady=20)
 
-leaderboard_text = tk.Text(
-    leaderboard_page,
-    height=20,
-    width=40,
-    font=("Times New Roman", 14)
+# Shared treeview style
+_lb_style = ttk.Style()
+_lb_style.theme_use("default")
+_lb_style.configure("LB.Treeview",
+    background=BG_PANEL,
+    foreground=TEXT_LIGHT,
+    fieldbackground=BG_PANEL,
+    rowheight=26,
+    font=("Times New Roman", 12)
 )
+_lb_style.configure("LB.Treeview.Heading",
+    background=BTN_WOOD,
+    foreground=TEXT_LIGHT,
+    font=("Times New Roman", 12, "bold"),
+    relief="flat"
+)
+_lb_style.map("LB.Treeview", background=[("selected", BTN_HOVER)])
 
-leaderboard_text.pack(pady=20)
+def make_mode_table(parent, label_text):
+    tk.Label(
+        parent,
+        text=label_text,
+        bg=BG_MAIN,
+        fg=ACCENT,
+        font=("Times New Roman", 12, "bold italic")
+    ).pack(pady=(10, 2))
+    table = ttk.Treeview(
+        parent,
+        style="LB.Treeview",
+        columns=("rank", "name", "wins", "ties"),
+        show="headings",
+        height=4
+    )
+    table.heading("rank", text="#")
+    table.heading("name", text="Player")
+    table.heading("wins", text="Wins")
+    table.heading("ties", text="Ties")
+    table.column("rank", width=40,  anchor="center")
+    table.column("name", width=160, anchor="center")
+    table.column("wins", width=70,  anchor="center")
+    table.column("ties", width=70,  anchor="center")
+    table.pack(pady=(0, 8))
+    return table
+
+lb_table_easy   = make_mode_table(leaderboard_page, "🌿 Easy Mode")
+lb_table_medium = make_mode_table(leaderboard_page, "⚔ Medium Mode")
+lb_table_hard   = make_mode_table(leaderboard_page, "🔥 Hard Mode")
+
+def _fill_table(table, mode):
+    for row in table.get_children():
+        table.delete(row)
+
+    top3 = get_top_players_by_mode(mode, limit=3)
+    top3_names = {name for name, _, _ in top3}
+
+    for rank, (name, wins, ties) in enumerate(top3, start=1):
+        table.insert("", tk.END, values=(rank, name, wins, ties))
+
+    # Show current user below top 3 if they didn't make it
+    me = _user_module.current_user
+    if me and me not in top3_names:
+        result = get_user_rank_by_mode(mode, me)
+        if result:
+            my_rank, my_wins, my_ties = result
+            table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
 
 def refresh_leaderboard():
-
-    leaderboard_text.config(state="normal")
-    leaderboard_text.delete("1.0", tk.END)
-
-    players = get_top_players()
-
-    rank = 1
-
-    for name, wins, losses, ties, total in players:
-
-        leaderboard_text.insert(
-            tk.END,
-            f"{rank}. {name}:  {wins} Wins, {ties} Ties\n"
-        )
-
-        rank += 1
-
-    leaderboard_text.config(state="disabled")
+    _fill_table(lb_table_easy,   "easy")
+    _fill_table(lb_table_medium, "medium")
+    _fill_table(lb_table_hard,   "hard")
 
 tk.Button(
     leaderboard_page,
