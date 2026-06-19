@@ -1,7 +1,8 @@
 import tkinter as tk
 from board_utils import easy_mode, medium_mode, hard_mode, clear_btn
 from tkinter import messagebox
-from user import create_database, register_user, login_user, add_medium_win, add_medium_loss, get_top_players
+from user import register_user, login_user, get_top_players, set_current_user
+
 
 # COLORS
 BG_MAIN = "#2b1d16"       # dark wood
@@ -112,8 +113,8 @@ def login_clicked():
 
     if login_user(username, password):
 
-        current_user = username
-
+        set_current_user(username)
+        
         messagebox.showinfo(
             "Success",
             f"Welcome {username}"
@@ -141,21 +142,65 @@ tk.Button(
 ).pack(pady=5)
 
 #registerrr
+
+#LOGIN PAGESS
+tk.Label(
+    register_page,
+    text="◈ NINE TILES ◈",
+    bg=BG_MAIN,
+    fg=TEXT_LIGHT,
+    font=("Times New Roman", 24, "bold")
+).pack(pady=30)
+
+tk.Label(
+    register_page,
+    text="Login to Continue",
+    bg=BG_MAIN,
+    fg=ACCENT,
+    font=("Times New Roman", 12, "italic")
+).pack(pady=5)
+
+# USERNAME LABEL
+
+tk.Label(
+    register_page,
+    text="Username",
+    bg=BG_MAIN,
+    fg=TEXT_LIGHT
+).pack()
+
+
 # Register username box
 new_user_entry = tk.Entry(register_page, width=25)
-new_user_entry.pack(pady=10)
+new_user_entry.pack(pady=5)
+
+# PASSWORD LABEL
+
+tk.Label(
+    register_page,
+    text="Password",
+    bg=BG_MAIN,
+    fg=TEXT_LIGHT
+).pack()
+
 
 # Register password box
 new_pass_entry = tk.Entry(register_page, width=25, show="*")
-new_pass_entry.pack(pady=10)
+new_pass_entry.pack(pady=5)
 
 def register_clicked():
+    
+    username = new_user_entry.get().strip()
+    password = new_pass_entry.get().strip()
 
-    username = new_user_entry.get()
-    password = new_pass_entry.get()
-   
+    if not username or not password:
+        messagebox.showerror(
+            "Error",
+            "Username and Password are required"
+        )
+        
 
-    if register_user(username, password):
+    elif register_user(username, password):
 
         messagebox.showinfo(
             "Success",
@@ -177,6 +222,11 @@ tk.Button(
     command=register_clicked
 ).pack(pady=10)
 
+tk.Button(
+    register_page,
+    text="Back to Login",
+    command=lambda: show_frame(login_page)
+).pack(pady=10)
 
 # TITLE
 menu_title = tk.Label(
@@ -250,8 +300,8 @@ tk.Label(
 
 leaderboard_text = tk.Text(
     leaderboard_page,
-    height=10,
-    width=30,
+    height=20,
+    width=40,
     font=("Times New Roman", 14)
 )
 
@@ -266,11 +316,11 @@ def refresh_leaderboard():
 
     rank = 1
 
-    for name, wins in players:
+    for name, wins, losses, ties, total in players:
 
         leaderboard_text.insert(
             tk.END,
-            f"{rank}. {name} - {wins} wins\n"
+            f"{rank}. {name}:  {wins} Wins, {ties} Ties\n"
         )
 
         rank += 1
@@ -390,13 +440,4 @@ button_hard = create_game_page(
 
 #menu priority
 show_frame(login_page)
-
-# macOS: force window focus so Entry widgets accept keyboard input
-def focus_fix():
-    root.lift()
-    root.attributes('-topmost', True)
-    root.after(100, lambda: root.attributes('-topmost', False))
-    username_entry.focus_set()
-
-root.after(100, focus_fix)
 root.mainloop()
