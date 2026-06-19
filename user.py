@@ -262,7 +262,25 @@ def add_hard_ties():
     conn.commit()
     conn.close()
 
-#leaderboard
+#leaderboard - per mode
+def get_top_players_by_mode(mode, limit=5):
+    """Return top players for a specific mode.
+    mode: 'easy' | 'medium' | 'hard'
+    Returns: [(username, wins, ties), ...]
+    """
+    conn = sqlite3.connect("nine_tiles.db")
+    cursor = conn.cursor()
+    cursor.execute(f"""
+    SELECT username, {mode}_wins AS wins, {mode}_ties AS ties
+    FROM users
+    ORDER BY {mode}_wins DESC, {mode}_ties DESC
+    LIMIT ?
+    """, (limit,))
+    leaders = cursor.fetchall()
+    conn.close()
+    return leaders
+
+#leaderboard - total
 def get_top_players():
 
     conn = sqlite3.connect("nine_tiles.db")
