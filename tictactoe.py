@@ -1,7 +1,7 @@
 import tkinter as tk
 from board_utils import easy_mode, medium_mode, hard_mode, clear_btn
 from tkinter import messagebox, ttk
-from user import register_user, login_user, get_top_players_by_mode, get_user_rank_by_mode, set_current_user
+from user import register_user, login_user, get_top_players_by_mode, get_user_stats_by_mode, get_count_above_score, set_current_user
 import user as _user_module
 
 
@@ -352,17 +352,31 @@ def _fill_table(table, mode):
         table.delete(row)
 
     top3 = get_top_players_by_mode(mode, limit=3)
-    top3_names = {name for _, name, _, _ in top3}
+    top3_names = {name for name, _, _ in top3}
 
-    for rank, name, wins, ties in top3:
+    rank, prev_wins, prev_ties = 1, None, None
+    for i, (name, wins, ties) in enumerate(top3):
+        if wins != prev_wins and ties != prev_ties:
+            rank = i + 1
+        prev_wins = wins
+        prev_ties = ties
         table.insert("", tk.END, values=(rank, name, wins, ties))
 
     # Show current user below top 3 if they didn't make it
     me = _user_module.current_user
     if me and me not in top3_names:
-        result = get_user_rank_by_mode(mode, me)
-        if result:
-            my_rank, my_wins, my_ties = result
+        stats = get_user_stats_by_mode(mode, me)
+        if stats:
+            my_wins, my_ties = stats
+
+            if my_wins == prev_wins and my_ties == prev_ties:
+                # Tied with the last top-3 entry — share the same rank
+                my_rank = rank
+            else:
+                # Rank = number of users with a strictly higher score + 1
+                my_rank = get_count_above_score(mode, my_wins, my_ties) + 1
+
+            table.insert("", tk.END, values=("—", "", "", ""))
             table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
 
 def refresh_leaderboard():
