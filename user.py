@@ -274,7 +274,7 @@ def get_top_players():
         (medium_ties + easy_ties + hard_ties) ties,
         games_played
     FROM users
-    ORDER BY wins, ties DESC
+    ORDER BY wins DESC, ties DESC
     LIMIT 3
     """)
 
