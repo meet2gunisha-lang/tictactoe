@@ -37,8 +37,6 @@ def create_database():
 create_database()
 
 
-#REGISTERING AND PLAYER PROFILESSS
-
 def register_user(username,password):
 
     conn = sqlite3.connect("nine_tiles.db")
