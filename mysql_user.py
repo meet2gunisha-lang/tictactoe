@@ -1,10 +1,9 @@
 import mysql.connector
 
-# ── DB connection config ──────────────────────────────────────────────────────
 DB_CONFIG = {
     "host":     "localhost",
-    "user":     "root",       # change to your MySQL username
-    "password": "",           # change to your MySQL password
+    "user":     "root",       
+    "password": "",           
     "database": "nine_tiles"
 }
 
@@ -15,7 +14,10 @@ def set_current_user(username):
     current_user = username
 
 def _connect():
-    return mysql.connector.connect(**DB_CONFIG)
+    mycon = mysql.connector.connect(**DB_CONFIG)
+    if mycon.is_connected() == False:
+        print('Error connected to MYSQL database')
+    return mycon
 
 def create_database():
     cfg = DB_CONFIG.copy()
@@ -52,8 +54,6 @@ def create_database():
 
 create_database()
 
-
-#REGISTERING AND PLAYER PROFILESSS
 
 def register_user(username, password):
 
