@@ -27,8 +27,8 @@ def create_database():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users(
-        username TEXT PRIMARY KEY,
-        password TEXT,
+        username VARCHAR(255) PRIMARY KEY,
+        password VARCHAR(255),
 
         easy_wins    INTEGER DEFAULT 0,
         easy_losses  INTEGER DEFAULT 0,
