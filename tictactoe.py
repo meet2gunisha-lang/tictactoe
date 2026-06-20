@@ -4,8 +4,6 @@ from tkinter import messagebox, ttk
 from user import *
 import user as user_module
 
-
-# COLORS
 BG_MAIN = "#2b1d16"       
 BG_PANEL = "#4a2c1d"      
 BTN_WOOD = "#8b5a2b"     
@@ -13,7 +11,7 @@ BTN_HOVER = "#a06a3b"
 TEXT_LIGHT = "#f5e6cc"    
 GRID_COLOR = "#c89b6d"
 ACCENT = "#d9b382"
-# ROOT , Title
+
 root = tk.Tk()
 root.title("Nine Tiles")
 root.geometry("520x640")
@@ -23,11 +21,9 @@ root.resizable(False, False)
 root.rowconfigure(0, weight=1)
 root.columnconfigure(0, weight=1)
 
-#page switch
 def show_frame(frame):
     frame.tkraise()
 
-# Hover glow
 def on_enter(e):
     e.widget['background'] = BTN_HOVER
 
@@ -50,10 +46,8 @@ def style_button(btn):
     btn.bind("<Enter>", on_enter)
     btn.bind("<Leave>", on_leave)
 
-#PAGES
 login_page = tk.Frame(root, bg=BG_MAIN)
 register_page = tk.Frame(root, bg=BG_MAIN)
-
 menu_page = tk.Frame(root, bg=BG_MAIN)
 easy_page = tk.Frame(root, bg=BG_MAIN)
 medium_page = tk.Frame(root, bg=BG_MAIN)
@@ -63,7 +57,6 @@ leaderboard_page=tk.Frame(root,bg=BG_MAIN)
 for frame in (login_page,register_page,menu_page, easy_page, medium_page, hard_page,leaderboard_page):
     frame.grid(row=0, column=0, sticky="nsew")
 
-#LOGIN PAGESS
 tk.Label(
     login_page,
     text="◈ NINE TILES ◈",
@@ -80,7 +73,6 @@ tk.Label(
     font=("Times New Roman", 18, "italic")
 ).pack(pady=5)
 
-# USERNAME LABEL
 
 tk.Label(
     login_page,
@@ -92,8 +84,6 @@ tk.Label(
 
 username_entry = tk.Entry(login_page, width=25, font=("Times New Roman", 14))
 username_entry.pack(pady=10)
-
-# PASSWORD LABEL
 
 tk.Label(
     login_page,
@@ -151,7 +141,9 @@ new_acnt_btn = tk.Button(
     command=lambda: (
         show_frame(register_page),
         username_entry.delete(0,tk.END),
-        password_entry.delete(0,tk.END)
+        password_entry.delete(0,tk.END),
+        new_user_entry.delete(0,tk.END),
+        new_pass_entry.delete(0,tk.END)
         )
 )
 style_button(new_acnt_btn)
@@ -167,10 +159,6 @@ exit_btn = tk.Button(
 style_button(exit_btn)
 exit_btn.pack(pady=10)
 
-
-#registerrr
-
-#LOGIN PAGESS
 tk.Label(
     register_page,
     text="◈ NINE TILES ◈",
@@ -187,8 +175,6 @@ tk.Label(
     font=("Times New Roman", 18, "italic")
 ).pack(pady=5)
 
-# USERNAME LABEL
-
 tk.Label(
     register_page,
     text="Username",
@@ -197,12 +183,8 @@ tk.Label(
     font=("Times New Roman", 14)
 ).pack()
 
-
-# Register username box
 new_user_entry = tk.Entry(register_page, width=25, font=("Times New Roman", 14))
 new_user_entry.pack(pady=10)
-
-# PASSWORD LABEL
 
 tk.Label(
     register_page,
@@ -212,8 +194,6 @@ tk.Label(
     font=("Times New Roman", 14)
 ).pack()
 
-
-# Register password box
 new_pass_entry = tk.Entry(register_page, width=25, show="*", font=("Times New Roman", 14))
 new_pass_entry.pack(pady=10)
 
@@ -265,7 +245,6 @@ back_login_btn = tk.Button(
 style_button(back_login_btn)
 back_login_btn.pack(pady=10)
 
-# TITLE
 menu_title = tk.Label(
     menu_page,
     text="◈ NINE TILES ◈",
@@ -282,7 +261,6 @@ subtitle = tk.Label(
     font=("Times New Roman", 14, "italic")
 )
 subtitle.pack(pady=5)
-# MENU BUTTON
 btn_easy = tk.Button(
     menu_page,
     text="Easy Mode",
@@ -381,7 +359,7 @@ def fill_table(table, mode):
         table.delete(row)
 
     top3 = get_top_players_by_mode(mode, limit=3)
-    top3_names = {name for name, _, _ in top3}
+    top3_names = []
 
     rank, prev_wins, prev_ties = 1, None, None
     i = 0
@@ -391,20 +369,15 @@ def fill_table(table, mode):
         prev_wins = wins
         prev_ties = ties
         table.insert("", tk.END, values=(rank, name, wins, ties))
+        top3_names.append(name)
         i = i+1
 
     me = user_module.current_user
-    if me and me not in top3_names:
-        stats = get_user_stats_by_mode(mode, me)
-        if stats:
-            my_wins, my_ties = stats
+    if me not in top3_names:
+        my_wins, my_ties = get_user_stats_by_mode(mode, me)
+        my_rank = get_count_above_score(mode, my_wins, my_ties) + 1
 
-            if (my_wins == prev_wins and my_ties == prev_ties):
-                my_rank = rank
-            else:
-                my_rank = get_count_above_score(mode, my_wins, my_ties) + 1
-
-            table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
+        table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
 
 def refresh_leaderboard():
     fill_table(lb_table_easy,   "easy")
