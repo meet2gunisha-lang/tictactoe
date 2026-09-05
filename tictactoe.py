@@ -1,17 +1,24 @@
+# ── Nine Tiles: main Tkinter UI ────────────────────────────────────────────
+# This file only handles the interface (pages, widgets, event wiring).
+# Game logic/AI lives in board_utils.py; login/stats/leaderboard queries
+# live in mysql_user.py.
+
 import tkinter as tk
 from board_utils import easy_mode, medium_mode, hard_mode, clear_btn
 from tkinter import messagebox, ttk
-from user import *
-import user as user_module
+from mysql_user import *
+import mysql_user as user_module
 
-BG_MAIN = "#2b1d16"       
-BG_PANEL = "#4a2c1d"      
-BTN_WOOD = "#8b5a2b"     
+# ── Color palette (wood/parchment theme) ─────────────────────────────────────
+BG_MAIN = "#2b1d16"
+BG_PANEL = "#4a2c1d"
+BTN_WOOD = "#8b5a2b"
 BTN_HOVER = "#a06a3b"
-TEXT_LIGHT = "#f5e6cc"    
+TEXT_LIGHT = "#f5e6cc"
 GRID_COLOR = "#c89b6d"
 ACCENT = "#d9b382"
 
+# ── Main window setup ─────────────────────────────────────────────────────────
 root = tk.Tk()
 root.title("Nine Tiles")
 root.geometry("520x640")
@@ -22,8 +29,10 @@ root.rowconfigure(0, weight=1)
 root.columnconfigure(0, weight=1)
 
 def show_frame(frame):
+    """Bring the given page (Frame) to the front of the stacked layout."""
     frame.tkraise()
 
+# Hover-highlight effects, bound to every styled button via style_button()
 def on_enter(e):
     e.widget['background'] = BTN_HOVER
 
@@ -32,6 +41,7 @@ def on_leave(e):
     e.widget['background'] = BTN_WOOD
 
 def style_button(btn):
+    """Apply the shared wood/parchment button look + hover effect."""
     btn.configure(
         bg=BTN_WOOD,
         fg=TEXT_LIGHT,
@@ -46,6 +56,9 @@ def style_button(btn):
     btn.bind("<Enter>", on_enter)
     btn.bind("<Leave>", on_leave)
 
+# ── Pages ─────────────────────────────────────────────────────────────────────
+# All pages are stacked in the same grid cell; show_frame() raises whichever
+# one should be visible (a common Tkinter "multi-page" pattern).
 login_page = tk.Frame(root, bg=BG_MAIN)
 register_page = tk.Frame(root, bg=BG_MAIN)
 menu_page = tk.Frame(root, bg=BG_MAIN)
@@ -97,7 +110,9 @@ password_entry = tk.Entry(login_page, width=25, show="*",  font=("Times New Roma
 password_entry.pack(pady=10)
 
 def login_clicked():
-
+    """Validate the login form against the database and, on success,
+    remember the logged-in username and navigate to the main menu.
+    """
     global current_user
 
     username = username_entry.get()
@@ -198,7 +213,10 @@ new_pass_entry = tk.Entry(register_page, width=25, show="*", font=("Times New Ro
 new_pass_entry.pack(pady=10)
 
 def register_clicked():
-
+    """Validate the sign-up form and create a new account.
+    Shows an error if fields are blank or if the username is taken
+    (register_user() returns False on a duplicate primary key).
+    """
     username = new_user_entry.get().strip()
     password = new_pass_entry.get().strip()
 
@@ -309,6 +327,8 @@ tk.Label(
     font=("Times New Roman", 20, "bold")
 ).pack(pady=10)
 
+# Themed style for the leaderboard tables (ttk.Treeview doesn't take
+# bg/fg options directly - it needs a named ttk.Style instead)
 lb_style = ttk.Style()
 lb_style.theme_use("default")
 lb_style.configure("LB.Treeview",
@@ -325,6 +345,10 @@ lb_style.configure("LB.Treeview.Heading",
 )
 
 def make_mode_table(parent, label_text):
+    """Build one labeled Rank/Player/Wins/Ties table for a single mode.
+    Called once per difficulty (easy/medium/hard) to build the three
+    leaderboard tables shown on the leaderboard page.
+    """
     tk.Label(
         parent,
         text=label_text,
@@ -355,12 +379,19 @@ lb_table_medium = make_mode_table(leaderboard_page, "⚔ Medium Mode")
 lb_table_hard   = make_mode_table(leaderboard_page, "🔥 Hard Mode")
 
 def fill_table(table, mode):
+    """Populate one mode's leaderboard table: top 3 players, then the
+    current user's own rank/stats appended below if they didn't place
+    in the top 3.
+    """
+    # Wipe any rows left over from the previous refresh
     for row in table.get_children():
         table.delete(row)
 
     top3 = get_top_players_by_mode(mode, limit=3)
     top3_names = []
 
+    # Players tied on (wins, ties) share the same displayed rank number
+    # (e.g. two players tied for 1st both show rank 1, next shows rank 3).
     rank, prev_wins, prev_ties = 1, None, None
     i = 0
     for  (name, wins, ties) in top3:
@@ -372,6 +403,9 @@ def fill_table(table, mode):
         top3_names.append(name)
         i = i+1
 
+    # If the logged-in user isn't already shown in the top 3, append
+    # their own stats + computed rank as an extra row so they can always
+    # see where they stand.
     me = user_module.current_user
     if me not in top3_names:
         my_wins, my_ties = get_user_stats_by_mode(mode, me)
@@ -380,6 +414,10 @@ def fill_table(table, mode):
         table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
 
 def refresh_leaderboard():
+    """Rebuild all three per-mode leaderboard tables from the database.
+    Called every time the leaderboard page is opened, so stats are
+    always current.
+    """
     fill_table(lb_table_easy,   "easy")
     fill_table(lb_table_medium, "medium")
     fill_table(lb_table_hard,   "hard")
@@ -411,7 +449,13 @@ style_button(btn_leaderboard)
 btn_leaderboard.pack(pady=10)
 
 def create_game_page(page, title, mode_function):
+    """Build a full game page: title, 3x3 button grid wired to
+    `mode_function` (easy_mode / medium_mode / hard_mode), and a
+    "Return to Menu" button that resets the grid.
 
+    Returns the 3x3 list of button widgets, so board state can be
+    read/written directly by the mode function.
+    """
     title_label = tk.Label(
         page,
         text=title,
@@ -481,6 +525,7 @@ def create_game_page(page, title, mode_function):
 
     return buttons
 
+# Build the three game pages, each wired to its own AI implementation
 button_easy = create_game_page(
     easy_page,
     "🌿 Easy Mode",
@@ -499,5 +544,6 @@ button_hard = create_game_page(
     hard_mode
 )
 
+# Start on the login page and enter the Tkinter event loop
 show_frame(login_page)
 root.mainloop()

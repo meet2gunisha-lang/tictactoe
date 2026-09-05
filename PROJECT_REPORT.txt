@@ -1,0 +1,574 @@
+BRIEF OVERVIEW OF THE PROJECT
+
+Our project, "Nine Tiles," is a desktop Tic-Tac-Toe game built using Python's Tkinter GUI framework, offering a user-friendly menu-driven interface with the following features:
+
+User Authentication: Secure login and signup functionality using usernames and passwords, backed by a MySQL database, to control access to the game.
+
+Multi-Difficulty Gameplay: Three distinct game modes — Easy, Medium, and Hard — each powered by a different AI strategy, letting players choose their level of challenge.
+
+AI Opponent Logic: The Easy mode uses random move selection, the Medium mode uses rule-based heuristics (win/block detection with positional strategy), and the Hard mode uses the Minimax algorithm to play a mathematically unbeatable game.
+
+Score and Statistics Tracking: Automatically records wins, losses, and ties for every user, separately for each difficulty level, persisting the data in a MySQL database.
+
+Leaderboard Display: Presents per-mode leaderboards (Easy, Medium, Hard) showing the top-ranked players by combined wins and ties, and additionally displays the current user's own rank if they fall outside the top 3.
+
+
+
+OBJECTIVE AND SCOPE
+
+The primary objective of this Nine Tiles (Tic-Tac-Toe) project is to build an engaging, replayable desktop game that also demonstrates practical use of GUI programming, game-tree algorithms, and database-backed persistence. The project aims to achieve the following key objectives:
+
+User Access Control: Implement secure user authentication (login/signup) to control access to the game, ensuring each player's statistics are tracked individually.
+
+Difficulty-Based Gameplay: Offer three AI difficulty levels — Easy (random), Medium (rule-based heuristics), and Hard (Minimax) — to cater to players of varying skill levels.
+
+Game Logic Correctness: Centralize win/tie detection logic in a shared, reusable module so all three modes and the Minimax search evaluate the board consistently.
+
+Statistics Management: Track and persist per-user, per-mode win/loss/tie counts and total games played, enabling long-term progress tracking.
+
+Competitive Ranking: Provide a per-mode leaderboard that ranks players by performance, motivating replayability and healthy competition among users.
+
+Cross-Platform UI Reliability: Ensure the Tkinter interface (buttons, entries, focus behavior) renders and behaves consistently, particularly addressing macOS-specific rendering quirks.
+
+
+
+HARDWARE AND SOFTWARE REQUIRED
+
+Hardware- PC
+
+Software- Python (IDLE / PyCharm / VS Code)
+
+MySQL Command Line Client
+
+MySQL Workbench
+
+Python MySQL Connector
+
+
+
+PYTHON LIBRARIES REQUIRED
+
+tkinter: This is Python's standard GUI toolkit, used to build all windows, frames, buttons, entry fields, and the leaderboard table (via tkinter.ttk.Treeview).
+
+tkinter.messagebox: This displays pop-up dialogs for login errors, registration confirmations, and game-over results (win/loss/tie).
+
+tkinter.ttk: This provides themed widgets, specifically the Treeview widget used to render the per-mode leaderboard tables.
+
+mysql.connector: This enables Python programs to access and query the MySQL database for user authentication and statistics.
+
+random: This is an in-built module used by the Easy and Medium AI modes to make random move selections among valid choices.
+
+
+
+SOURCE CODE
+
+
+
+		# NINE TILES - TIC TAC TOE PROJECT
+		# FILE 1: mysql_user.py  (Database layer - authentication & statistics)
+
+import mysql.connector
+
+# DB connection config
+DB_CONFIG = {
+    "host":     "localhost",
+    "user":     "root",
+    "password": "",
+    "database": "nine_tiles"
+}
+
+current_user = None
+
+def set_current_user(username):
+    global current_user
+    current_user = username
+
+def _connect():
+    mycon = mysql.connector.connect(**DB_CONFIG)
+    if mycon.is_connected() == False:
+        print('Error connected to MYSQL database')
+    return mycon
+
+def create_database():
+    cfg = DB_CONFIG.copy()
+    db_name = cfg.pop("database")
+    conn = mysql.connector.connect(**cfg)
+    cursor = conn.cursor()
+    cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{db_name}`")
+    cursor.execute(f"USE `{db_name}`")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        username TEXT PRIMARY KEY,
+        password TEXT,
+
+        easy_wins    INTEGER DEFAULT 0,
+        easy_losses  INTEGER DEFAULT 0,
+        easy_ties    INTEGER DEFAULT 0,
+
+        medium_losses INTEGER DEFAULT 0,
+        medium_wins   INTEGER DEFAULT 0,
+        medium_ties   INTEGER DEFAULT 0,
+
+        hard_wins    INTEGER DEFAULT 0,
+        hard_losses  INTEGER DEFAULT 0,
+        hard_ties    INTEGER DEFAULT 0,
+
+        games_played INTEGER DEFAULT 0
+    )
+    """)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+create_database()
+
+
+## TO REGISTER A NEW USER
+def register_user(username, password):
+
+    conn = _connect()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "INSERT INTO users(username, password) VALUES (%s, %s)",
+            (username, password)
+        )
+        conn.commit()
+        return True
+
+    except mysql.connector.IntegrityError:
+        return False
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+## TO LOGIN AN EXISTING USER
+def login_user(username, password):
+
+    conn = _connect()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM users WHERE username=%s AND password=%s",
+        (username, password)
+    )
+
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    return user
+
+
+## TO UPDATE WIN / LOSS / TIE COUNT FOR THE CURRENT USER
+def add_status(mode, status):
+
+    if not current_user:
+        return
+
+    conn = _connect()
+    cursor = conn.cursor()
+
+    cursor.execute(f"""
+    UPDATE users
+    SET {mode}_{status} = {mode}_{status} + 1,
+        games_played = games_played + 1
+    WHERE username = %s
+    """, (current_user,))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+## TO GET TOP 3 PLAYERS FOR A GIVEN MODE
+def get_top_players_by_mode(mode, limit=3):
+
+    conn = _connect()
+    cursor = conn.cursor()
+    cursor.execute(f"""
+    SELECT username, {mode}_wins AS wins, {mode}_ties AS ties
+    FROM users
+    ORDER BY {mode}_wins DESC, {mode}_ties DESC
+    LIMIT %s
+    """, (limit,))
+    leaders = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return leaders
+
+
+## TO GET A SPECIFIC USER'S WINS/TIES FOR A GIVEN MODE
+def get_user_stats_by_mode(mode, username):
+
+    conn = _connect()
+    cursor = conn.cursor()
+    cursor.execute(f"""
+    SELECT {mode}_wins, {mode}_ties FROM users WHERE username = %s
+    """, (username,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return row
+
+
+## TO COMPUTE A USER'S RANK (COUNT OF PLAYERS SCORING HIGHER)
+def get_count_above_score(mode, wins, ties):
+
+    conn = _connect()
+    cursor = conn.cursor()
+    cursor.execute(f"""
+    SELECT COUNT(*) FROM users
+    WHERE {mode}_wins > %s OR ( {mode}_wins = %s AND {mode}_ties > %s )
+    """, (wins, wins, ties))
+    count = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+    return count
+
+
+
+
+		# FILE 2: board_utils.py  (Game logic - board evaluation & AI)
+
+import tkinter as tk
+import random
+from tkinter import messagebox
+from mysql_user import *
+
+## TO RESET THE BOARD AFTER A GAME ENDS
+def clear_btn(buttons):
+    not_empty_buttons = [b for row in buttons for b in row]
+    for i in not_empty_buttons:
+        i.config(text="", state=tk.NORMAL)
+
+## PURE WIN-CHECK ON A 2D TEXT BOARD (SHARED BY UI AND MINIMAX)
+def check_board(board_text):
+    lines = [
+        [board_text[0][0],board_text[0][1],board_text[0][2]],
+        [board_text[1][0],board_text[1][1],board_text[1][2]],
+        [board_text[2][0],board_text[2][1],board_text[2][2]],
+        [board_text[0][0],board_text[1][0],board_text[2][0]],
+        [board_text[0][1],board_text[1][1],board_text[2][1]],
+        [board_text[0][2],board_text[1][2],board_text[2][2]],
+        [board_text[0][0],board_text[1][1],board_text[2][2]],
+        [board_text[0][2],board_text[1][1],board_text[2][0]],
+    ]
+    for line in lines:
+        if line == ["X","X","X"]: return "X"
+        if line == ["O","O","O"]: return "O"
+    if all(board_text[r][c] != "" for r in range(3) for c in range(3)): return "tie"
+    return None
+
+## CHECK GAME RESULT, SHOW MESSAGE, AND UPDATE STATS
+def check_winner(board, mode):
+    board_text=[[board[r][c].cget("text") for c in range(3)] for r in range(3)]
+    status = check_board(board_text)
+    if status=="X":
+        messagebox.showinfo("Game Over","YOU WON 🎉")
+        clear_btn(board)
+        add_status(mode, "wins")
+        return "X"
+    elif status=="O":
+        messagebox.showinfo("Game Over","Computer Won 😔")
+        clear_btn(board)
+        add_status(mode, "losses")
+        return "O"
+    elif status=="tie":
+        messagebox.showinfo("Game Over","It's a Tie 😐")
+        clear_btn(board)
+        add_status(mode, "ties")
+        return "tie"
+    return 0
+
+## EASY MODE - RANDOM AI MOVE
+def easy_mode(btn, board):
+    if btn.cget("text")=='':
+        btn.config(text="X",state=tk.DISABLED)
+        empty_buttons = [b for row in board for b in row if b.cget("text") == ""]
+        win=check_winner(board, "easy")
+        if win==0:
+            if empty_buttons:
+                ai_btn = random.choice(empty_buttons)
+                ai_btn.config(text="O", state=tk.DISABLED)
+        check_winner(board, "easy")
+
+## MEDIUM MODE - RULE BASED AI (WIN / BLOCK / POSITIONAL HEURISTICS)
+def medium_mode(btn, board):
+    if btn.cget("text")=='':
+        btn.config(text="X",state=tk.DISABLED)
+        board=[[board[r][c] for c in range (3)]for r in range (3)]
+        empty_buttons = [b for row in board for b in row if b.cget("text") == ""]
+        cnt=len(empty_buttons)
+        win=check_winner(board, "medium")
+        if cnt==0:
+            win=check_winner(board, "medium")
+        elif win==0:
+            check_medium(cnt, board)
+        if cnt==8:
+            if board[1][1].cget("text")=="X" :
+                ai_btn = random.choice([board[0][0], board[0][2],board[2][0], board[2][2]])
+                ai_btn.config(text="O", state=tk.DISABLED)
+            else:
+                board[1][1].config(text="O", state=tk.DISABLED)
+        check_winner(board, "medium")
+
+## MEDIUM MODE HELPER - EVALUATES WIN/BLOCK/POSITIONAL OPTIONS
+def check_medium(cnt, board):
+    # (Full win-detection, block-detection, and positional-strategy logic
+    #  across all 3 rows, 3 columns, and 2 diagonals — omitted here for
+    #  brevity; see board_utils.py for the complete implementation.)
+    pass
+
+## HARD MODE - UNBEATABLE MINIMAX AI
+def hard_mode(btn, board):
+    if btn.cget("text")=='':
+        btn.config(text="X",state=tk.DISABLED)
+        board_text=[[board[r][c].cget("text") for c in range(3)] for r in range(3)]
+        empty_buttons=[b for row in board for b in row if b.cget("text")==""]
+        cnt=len(empty_buttons)
+        win=check_winner(board, "hard")
+        if cnt==0:
+            win=check_winner(board, "hard")
+        elif win==0:
+            pos=best_move(board_text)
+            if pos:
+                r,c=pos
+                board[r][c].config(text="O",state=tk.DISABLED)
+        check_winner(board, "hard")
+
+## RETURNS BEST MOVE FOR O USING MINIMAX SEARCH
+def best_move(board):
+    best_score, best_pos = -100, None
+    for r in range(3):
+        for c in range(3):
+            if board[r][c]=="":
+                board[r][c]="O"
+                score = minimax(board, False)
+                board[r][c]=""
+                if score > best_score:
+                    best_score, best_pos = score, (r, c)
+    return best_pos
+
+## MINIMAX: O IS MAXIMISER (+10), X IS MINIMISER (-10), TIE IS 0
+def minimax(board, is_maximizing):
+    result = check_board(board)
+    if result=="O":   return 10
+    if result=="X":   return -10
+    if result=="tie": return 0
+    if is_maximizing:
+        best = -100
+        for r in range(3):
+            for c in range(3):
+                if board[r][c]=="":
+                    board[r][c]="O"
+                    best = max(best, minimax(board, False))
+                    board[r][c]=""
+        return best
+    else:
+        best = 100
+        for r in range(3):
+            for c in range(3):
+                if board[r][c]=="":
+                    board[r][c]="X"
+                    best = min(best, minimax(board, True))
+                    board[r][c]=""
+        return best
+
+
+
+
+		# FILE 3: tictactoe.py  (Main UI - login, register, menu, gameplay, leaderboard)
+
+import tkinter as tk
+from board_utils import easy_mode, medium_mode, hard_mode, clear_btn
+from tkinter import messagebox, ttk
+from mysql_user import *
+import mysql_user as user_module
+
+# COLOR PALETTE
+BG_MAIN = "#2b1d16"
+BG_PANEL = "#4a2c1d"
+BTN_WOOD = "#8b5a2b"
+BTN_HOVER = "#a06a3b"
+TEXT_LIGHT = "#f5e6cc"
+GRID_COLOR = "#c89b6d"
+ACCENT = "#d9b382"
+
+root = tk.Tk()
+root.title("Nine Tiles")
+root.geometry("520x640")
+root.configure(bg=BG_MAIN)
+root.resizable(False, False)
+
+## PAGE SWITCHING
+def show_frame(frame):
+    frame.tkraise()
+
+## HOVER GLOW EFFECTS FOR BUTTONS
+def on_enter(e):
+    e.widget['background'] = BTN_HOVER
+
+def on_leave(e):
+    e.widget['background'] = BTN_WOOD
+
+## BUTTON STYLING HELPER
+def style_button(btn):
+    btn.configure(
+        bg=BTN_WOOD, fg=TEXT_LIGHT,
+        activebackground=BTN_HOVER, activeforeground="black",
+        relief="flat", bd=0, cursor="hand2",
+        font=("Times New Roman", 13, "bold")
+    )
+    btn.bind("<Enter>", on_enter)
+    btn.bind("<Leave>", on_leave)
+
+# PAGE FRAMES: login, register, menu, easy, medium, hard, leaderboard
+login_page = tk.Frame(root, bg=BG_MAIN)
+register_page = tk.Frame(root, bg=BG_MAIN)
+menu_page = tk.Frame(root, bg=BG_MAIN)
+easy_page = tk.Frame(root, bg=BG_MAIN)
+medium_page = tk.Frame(root, bg=BG_MAIN)
+hard_page = tk.Frame(root, bg=BG_MAIN)
+leaderboard_page = tk.Frame(root, bg=BG_MAIN)
+
+## LOGIN HANDLER
+def login_clicked():
+    global current_user
+    username = username_entry.get()
+    password = password_entry.get()
+    if login_user(username, password):
+        set_current_user(username)
+        messagebox.showinfo("Success", f"Welcome {username}")
+        show_frame(menu_page)
+    else:
+        messagebox.showerror("Error", "Invalid Username or Password")
+
+## REGISTRATION HANDLER
+def register_clicked():
+    username = new_user_entry.get().strip()
+    password = new_pass_entry.get().strip()
+    if not username or not password:
+        messagebox.showerror("Error", "Username and Password are required")
+    elif register_user(username, password):
+        messagebox.showinfo("Success", "Account Created")
+        show_frame(login_page)
+    else:
+        messagebox.showerror("Error", "Username Already Exists")
+
+## LEADERBOARD TABLE BUILDER (ONE PER MODE)
+def make_mode_table(parent, label_text):
+    table = ttk.Treeview(
+        parent, style="LB.Treeview",
+        columns=("rank", "name", "wins", "ties"),
+        show="headings", height=4
+    )
+    table.heading("rank", text="#")
+    table.heading("name", text="Player")
+    table.heading("wins", text="Wins")
+    table.heading("ties", text="Ties")
+    return table
+
+## FILL A LEADERBOARD TABLE WITH TOP 3 + CURRENT USER'S RANK
+def fill_table(table, mode):
+    top3 = get_top_players_by_mode(mode, limit=3)
+    for row in table.get_children():
+        table.delete(row)
+    for i, (name, wins, ties) in enumerate(top3, start=1):
+        table.insert("", tk.END, values=(i, name, wins, ties))
+    me = user_module.current_user
+    my_wins, my_ties = get_user_stats_by_mode(mode, me)
+    my_rank = get_count_above_score(mode, my_wins, my_ties) + 1
+    table.insert("", tk.END, values=(my_rank, f"{me} ★", my_wins, my_ties))
+
+def refresh_leaderboard():
+    fill_table(lb_table_easy,   "easy")
+    fill_table(lb_table_medium, "medium")
+    fill_table(lb_table_hard,   "hard")
+
+## BUILDS A 3x3 GAME GRID FOR A GIVEN DIFFICULTY MODE
+def create_game_page(page, title, mode_function):
+    buttons = []
+    for row in range(3):
+        button_row = []
+        for col in range(3):
+            btn = tk.Button(page, text="", width=5, height=2, font=("Times New Roman", 28, "bold"))
+            btn.config(command=lambda b=btn: mode_function(b, buttons))
+            button_row.append(btn)
+        buttons.append(button_row)
+    return buttons
+
+button_easy   = create_game_page(easy_page, "🌿 Easy Mode", easy_mode)
+button_medium = create_game_page(medium_page, "⚔ Medium Mode", medium_mode)
+button_hard   = create_game_page(hard_page, "🔥 Hard Mode - Minimax AI", hard_mode)
+
+show_frame(login_page)
+root.mainloop()
+
+
+
+OUTPUT SCREEN
+
+(Screenshots to be added here separately.)
+
+
+
+SQL DATABASE
+
+MySQL Database — Schema: `nine_tiles`
+
+Table: users
+
+    Column          | Type        | Description
+    ----------------|-------------|---------------------------------------
+    username        | TEXT (PK)   | Unique player identifier / login name
+    password        | TEXT        | Player's login password
+    easy_wins       | INTEGER     | Wins recorded in Easy mode
+    easy_losses     | INTEGER     | Losses recorded in Easy mode
+    easy_ties       | INTEGER     | Ties recorded in Easy mode
+    medium_wins     | INTEGER     | Wins recorded in Medium mode
+    medium_losses   | INTEGER     | Losses recorded in Medium mode
+    medium_ties     | INTEGER     | Ties recorded in Medium mode
+    hard_wins       | INTEGER     | Wins recorded in Hard mode
+    hard_losses     | INTEGER     | Losses recorded in Hard mode
+    hard_ties       | INTEGER     | Ties recorded in Hard mode
+    games_played    | INTEGER     | Total games played across all modes
+
+This single table stores both authentication credentials and per-mode game statistics, allowing wins/losses/ties to be tracked independently for Easy, Medium, and Hard difficulty levels, and enabling per-mode leaderboard ranking queries.
+
+
+
+CONCLUSION
+
+The project's conclusion underscores the value of combining a graphical user interface with classic game-theory algorithms and persistent database storage. Building "Nine Tiles" reinforced practical skills in Tkinter-based GUI design, recursive algorithm design (Minimax), rule-based heuristic AI, and MySQL-backed data persistence — all valuable tools for future software development work.
+
+Advantages of the project:
+
+Offers three distinct difficulty levels, catering to casual players as well as those seeking an unbeatable challenge.
+
+Demonstrates a mathematically optimal AI (Minimax) that never loses.
+
+Tracks and persists per-user, per-mode statistics for long-term progress visibility.
+
+Provides competitive motivation through per-mode leaderboards and personal rank visibility.
+
+Cleanly separates concerns: UI (tictactoe.py), game logic/AI (board_utils.py), and data persistence (mysql_user.py).
+
+Reusable win-check logic (check_board) avoids duplicated logic between the UI layer and the Minimax search.
+
+
+
+BIBLIOGRAPHY
+
+Computer Science with Python - Class XII By: Sumita Arora
+
+Python Official Documentation - tkinter, mysql-connector-python
+
+www.w3schools.com
+
+MySQL Official Documentation
